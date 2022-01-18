@@ -1,8 +1,10 @@
-package no.ntnu.wearablememoryaugmentation;
+package no.ntnu.wearablememoryaugmentation.views;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+
+import no.ntnu.wearablememoryaugmentation.R;
 
 public class MainActivity extends AppCompatActivity {
 
