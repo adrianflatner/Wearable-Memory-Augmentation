@@ -25,6 +25,7 @@ public class HomeFragment extends Fragment {
 
     private TextView loggedInUserTextView;
     private Button logOutButton;
+    private Button settingsButton;
 
     private HomeViewModel homeViewModel;
 
@@ -67,6 +68,14 @@ public class HomeFragment extends Fragment {
                 homeViewModel.logOut();
             }
         });*/
+
+        settingsButton = view.findViewById(R.id.settingsButton);
+        settingsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_settingsFragment);
+            }
+        });
 
         Fragment cardFragment = new CardFragment();
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
