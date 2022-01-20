@@ -13,6 +13,14 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AppRepository {
 
@@ -20,6 +28,9 @@ public class AppRepository {
     private FirebaseAuth firebaseAuth;
     private MutableLiveData<FirebaseUser> userMutableLiveData;
     private MutableLiveData<Boolean> loggedOutMutableLiveData;
+    private DatabaseReference dbRef;
+    private FirebaseDatabase database;
+    private MutableLiveData<ArrayList<Cue>> cueListMutableLiveData;
 
     public AppRepository(Application application){
         this.application = application;
@@ -32,6 +43,11 @@ public class AppRepository {
             userMutableLiveData.postValue(firebaseAuth.getCurrentUser());
             loggedOutMutableLiveData.postValue(false);
         }
+
+        database = FirebaseDatabase.getInstance("https://wearable-memory-augmentation-default-rtdb.europe-west1.firebasedatabase.app");
+        dbRef = database.getReference("cues");
+
+        cueListMutableLiveData = new MutableLiveData<ArrayList<Cue>>();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
@@ -69,6 +85,26 @@ public class AppRepository {
     public void logout() {
         firebaseAuth.signOut();
         loggedOutMutableLiveData.postValue(true);
+    }
+
+    public MutableLiveData<ArrayList<Cue>> getCueListMutableLiveData() {
+        ArrayList<Cue> cueList = new ArrayList<>();
+        dbRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()){
+                    Cue cue = snapshot.getValue(Cue.class);
+                    cueList.add(cue);
+                }
+                cueListMutableLiveData.setValue(cueList);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        return cueListMutableLiveData;
     }
 
     public MutableLiveData<FirebaseUser> getUserMutableLiveData() {
