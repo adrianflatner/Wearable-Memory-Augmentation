@@ -29,6 +29,7 @@ public class CardFragment extends Fragment {
     private TextView cueInfo;
     private TextView currentInfo;
     private TextView cueTextSmall;
+    private ConstraintLayout cardView;
     private ArrayList<Cue> cueArrayList;
     private Boolean isFlipped;
 
@@ -59,6 +60,7 @@ public class CardFragment extends Fragment {
         currentInfo = view.findViewById(R.id.current_info);
         cueTextSmall = view.findViewById(R.id.cue_text_small);
         cueText = view.findViewById(R.id.cue_text);
+        cardView = view.findViewById(R.id.card_view);
         cueInfo = view.findViewById(R.id.cue_info);
         cueInfo.setVisibility(TextView.INVISIBLE);
 
@@ -71,6 +73,7 @@ public class CardFragment extends Fragment {
                 cueInfo.setVisibility(!isFlipped ? TextView.INVISIBLE : TextView.VISIBLE);
                 currentInfo.setText(isFlipped ? "Information" : "Current cue");
                 cueTextSmall.setText(isFlipped ? cueText.getText() : "");
+                cardView.setBackgroundResource(isFlipped ? R.drawable.card_background_yellow : R.drawable.card_background);
             }
         });
 
