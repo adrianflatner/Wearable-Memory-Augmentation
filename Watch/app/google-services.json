@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "141450787297",
+    "firebase_url": "https://wearable-memory-augmentation-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "wearable-memory-augmentation",
+    "storage_bucket": "wearable-memory-augmentation.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:141450787297:android:db26cd6488645d8c19baa0",
+        "android_client_info": {
+          "package_name": "no.ntnu.wearablememoryaugmentation"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "141450787297-b5aec0chrkue7i0ptma85j9rcd40ghr9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQH_MeMAAjbSEWNn_a78psBJhKHs27iX4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "141450787297-b5aec0chrkue7i0ptma85j9rcd40ghr9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
