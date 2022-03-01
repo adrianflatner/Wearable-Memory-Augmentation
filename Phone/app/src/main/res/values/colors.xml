@@ -19,4 +19,5 @@
     <color name="app_red_dark">#9B2226</color>
     <color name="app_white_transparent">#1AFFFFFF</color>
     <color name="app_yellow_transparent">#4DE9D8A6</color>
+    <color name="app_background_transparent">#CC001219</color>
 </resources>

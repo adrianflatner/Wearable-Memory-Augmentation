@@ -1,10 +1,12 @@
 package no.ntnu.wearablememoryaugmentation.views;
 
 import android.os.Bundle;
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -26,31 +28,33 @@ public class HomeFragment extends Fragment {
     private TextView loggedInUserTextView;
     private Button logOutButton;
     private Button settingsButton;
-
+    private Boolean isOn = true;
     private HomeViewModel homeViewModel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
-        homeViewModel.getUserMutableLiveData().observe(this, new Observer<FirebaseUser>() {
-            @Override
-            public void onChanged(FirebaseUser firebaseUser) {
-                if (firebaseUser != null){
-                    loggedInUserTextView.setText("Logged in user: " + firebaseUser.getEmail());
+        if (isOn) {
+            homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+            homeViewModel.getUserMutableLiveData().observe(this, new Observer<FirebaseUser>() {
+                @Override
+                public void onChanged(FirebaseUser firebaseUser) {
+                    if (firebaseUser != null) {
+                        loggedInUserTextView.setText("Logged in user: " + firebaseUser.getEmail());
+                    }
                 }
-            }
-        });
+            });
 
-        homeViewModel.getLoggedOutMutableLiveData().observe(this, new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean loggedOut) {
-                if (loggedOut){
-                    Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_loginRegisterFragment);
+            homeViewModel.getLoggedOutMutableLiveData().observe(this, new Observer<Boolean>() {
+                @Override
+                public void onChanged(Boolean loggedOut) {
+                    if (loggedOut) {
+                        Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_loginRegisterFragment);
+                    }
                 }
-            }
-        });
+            });
+        }
 
     }
 
@@ -77,13 +81,31 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        Fragment cardFragment = new CardFragment();
-        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
-        transaction.add(R.id.card_placeholder, cardFragment).commit();
+        View cardOff = view.findViewById(R.id.card_off_visibility);
 
-        Fragment navigationFragment = new NavigationFragment();
-        FragmentTransaction transaction2 = getChildFragmentManager().beginTransaction();
-        transaction2.add(R.id.navigation_placeholder, navigationFragment).commit();
+        if (isOn) {
+            Fragment cardFragment = new CardFragment();
+            FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+            transaction.add(R.id.card_placeholder, cardFragment).commit();
+        }
+        else{
+            cardOff.setVisibility(View.VISIBLE);
+        }
+
+        View on_off_button = view.findViewById(R.id.on_off_button);
+        on_off_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isOn = !isOn;
+                if (isOn) {
+                    cardOff.setVisibility(View.GONE);
+
+
+                } else {
+                    cardOff.setVisibility(View.VISIBLE);
+                }
+            }
+        });
 
         return view;
     }
