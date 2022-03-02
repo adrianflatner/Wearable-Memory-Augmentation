@@ -25,7 +25,7 @@ public class HomeFragment extends Fragment {
 
     private TextView loggedInUserTextView;
     private Button logOutButton;
-    private Button settingsButton;
+    private View settingsButton;
 
     private HomeViewModel homeViewModel;
 

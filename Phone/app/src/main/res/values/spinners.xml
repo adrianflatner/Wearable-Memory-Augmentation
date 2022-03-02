@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="cuingModes">
+        <item>Phone</item>
+        <item>Watch</item>
+        <item>Glasses</item>
+    </string-array>
+
+    <string-array name="timings">
+        <item>Random</item>
+        <item>15 minutes</item>
+        <item>30 minutes</item>
+        <item>1 hour</item>
+        <item>2 hours</item>
+    </string-array>
+
+    <string-array name="notifications">
+        <item>On</item>
+        <item>Off</item>
+    </string-array>
+</resources>
+
