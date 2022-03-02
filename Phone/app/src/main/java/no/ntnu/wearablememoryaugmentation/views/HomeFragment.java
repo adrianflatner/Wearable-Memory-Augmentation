@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -27,7 +28,7 @@ public class HomeFragment extends Fragment {
 
     private TextView loggedInUserTextView;
     private Button logOutButton;
-    private Button settingsButton;
+    private View settingsButton;
     private Boolean isOn = true;
     private HomeViewModel homeViewModel;
 
