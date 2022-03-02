@@ -36,6 +36,9 @@ public class CardFragment extends Fragment {
     private View flipButton;
     private TextView finishButton;
     private ArrayList<Cue> cueArrayList;
+    private TextView previousButton;
+    private TextView nextButton;
+    private int cueNum;
 
 
     @Override
@@ -46,11 +49,11 @@ public class CardFragment extends Fragment {
         cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
             @Override
             public void onChanged(ArrayList<Cue> cues) {
-                int i = 0;
+
                 if (cues != null) {
-                    cueText.setText(cues.get(i).cue);
-                    cueTextSmall.setText(cues.get(i).cue);
-                    cueInfo.setText(cues.get(i).info);
+                    cueText.setText(cues.get(cueNum).cue);
+                    cueTextSmall.setText(cues.get(cueNum).cue);
+                    cueInfo.setText(cues.get(cueNum).info);
                     cueArrayList = cues;
                 }
             }
@@ -84,6 +87,22 @@ public class CardFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), front, back);
+            }
+        });
+
+        previousButton = view.findViewById(R.id.previousButton);
+        previousButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                cueNum -= 1;
+            }
+        });
+
+        nextButton = view.findViewById(R.id.nextButton);
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                cueNum += 1;
             }
         });
 
