@@ -3,21 +3,28 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/figo_/AppData/Local/Android/Sdk/platforms/android-31/data/res/layout/simple_spinner_dropdown_item.xml" value="0.2351851851851852" />
+        <entry key="..\:/Users/figo_/AppData/Local/Android/Sdk/platforms/android-31/data/res/layout/simple_spinner_item.xml" value="0.2351851851851852" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/drawable/card_background.xml" value="0.2703125" />
+        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/drawable/card_background_off.xml" value="0.2595" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/drawable/card_background_yellow.xml" value="0.19270833333333334" />
+        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/drawable/dropdown_item.xml" value="0.1695" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/drawable/ic_arrow_right.xml" value="0.2595" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/drawable/ic_on_button.xml" value="0.2703125" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/drawable/ic_settings.xml" value="0.2703125" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/activity_main.xml" value="0.1793478260869565" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/card_back.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/card_front.xml" value="0.4" />
+        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/card_off.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/flip_out.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/fragment_card.xml" value="0.264" />
-        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/fragment_home.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/fragment_home.xml" value="0.536" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/fragment_loginregister.xml" value="0.264" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/fragment_navigation.xml" value="0.4" />
-        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/fragment_settings.xml" value="0.24547101449275363" />
+        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/fragment_settings.xml" value="0.4" />
         <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/navigation_fragment.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/spinner.xml" value="0.2695035460992908" />
+        <entry key="..\:/Users/figo_/Documents/Wearable Memory Augmentation/Wearable-Memory-Augmentation/Phone/app/src/main/res/layout/spinner_item.xml" value="0.2351851851851852" />
       </map>
     </option>
   </component>
