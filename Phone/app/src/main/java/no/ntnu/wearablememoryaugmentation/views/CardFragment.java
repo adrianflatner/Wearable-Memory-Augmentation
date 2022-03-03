@@ -2,6 +2,7 @@ package no.ntnu.wearablememoryaugmentation.views;
 
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,21 +37,30 @@ public class CardFragment extends Fragment {
     private View flipButton;
     private TextView finishButton;
     private ArrayList<Cue> cueArrayList;
-    private TextView previousButton;
-    private TextView nextButton;
+
     private int cueNum;
 
+    public CardFragment(int cueNum){
+        this.cueNum = cueNum;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+
         cardViewModel = new ViewModelProvider(this).get(CardViewModel.class);
         cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
             @Override
             public void onChanged(ArrayList<Cue> cues) {
-
                 if (cues != null) {
+                    cueNum = cueNum < 0 ? 0 : cueNum;
+                    cueNum = cues.size() <= cueNum ? cues.size()-1 : cueNum;
+                    editor.putInt("cueNum", cueNum);
+                    editor.commit();
                     cueText.setText(cues.get(cueNum).cue);
                     cueTextSmall.setText(cues.get(cueNum).cue);
                     cueInfo.setText(cues.get(cueNum).info);
@@ -90,21 +100,7 @@ public class CardFragment extends Fragment {
             }
         });
 
-        previousButton = view.findViewById(R.id.previousButton);
-        previousButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                cueNum -= 1;
-            }
-        });
 
-        nextButton = view.findViewById(R.id.nextButton);
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                cueNum += 1;
-            }
-        });
 
         return view;
     }
