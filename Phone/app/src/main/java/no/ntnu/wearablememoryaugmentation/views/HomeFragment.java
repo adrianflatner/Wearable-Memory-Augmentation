@@ -235,7 +235,7 @@ public class HomeFragment extends Fragment {
         private NotificationCompat.Builder createNotification() {
             String newCue = sharedPref.getString("currentCue", "New Cue");
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "cueChannel")
-                    .setSmallIcon(R.drawable.ic_arrow_right)
+                    .setSmallIcon(R.drawable.ic_logo_big)
                     .setContentTitle(newCue)
                     .setContentText("Tap to see cue!")
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
