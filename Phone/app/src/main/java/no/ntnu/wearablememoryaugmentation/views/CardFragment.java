@@ -49,7 +49,7 @@ public class CardFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
 
-        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
 
         cardViewModel = new ViewModelProvider(this).get(CardViewModel.class);
@@ -60,6 +60,11 @@ public class CardFragment extends Fragment {
                     cueNum = cueNum < 0 ? 0 : cueNum;
                     cueNum = cues.size() <= cueNum ? cues.size()-1 : cueNum;
                     editor.putInt("cueNum", cueNum);
+                    try {
+                        editor.putString("currentCue", cues.get(cueNum+1).cue);
+                    } catch (Exception e){
+                        editor.putString("currentCue", "Finished with all cues");
+                    }
                     editor.commit();
                     cueText.setText(cues.get(cueNum).cue);
                     cueTextSmall.setText(cues.get(cueNum).cue);
