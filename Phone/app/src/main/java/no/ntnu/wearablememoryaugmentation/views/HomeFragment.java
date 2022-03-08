@@ -18,8 +18,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.navigation.Navigation;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
@@ -29,10 +31,13 @@ import androidx.work.WorkerParameters;
 
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import no.ntnu.wearablememoryaugmentation.R;
+import no.ntnu.wearablememoryaugmentation.model.Cue;
+import no.ntnu.wearablememoryaugmentation.viewModel.CardViewModel;
 import no.ntnu.wearablememoryaugmentation.viewModel.HomeViewModel;
 
 public class HomeFragment extends Fragment {
@@ -218,10 +223,12 @@ public class HomeFragment extends Fragment {
     }
 
     public static class CueWorker extends Worker {
-        Context context;
+        private Context context;
         private int notificationId = 0;
-        SharedPreferences sharedPref;
-        SharedPreferences.Editor editor;
+        private SharedPreferences sharedPref;
+        private SharedPreferences.Editor editor;
+        //private String nextCue;
+
 
         public CueWorker(
                 @NonNull Context context,
@@ -231,6 +238,22 @@ public class HomeFragment extends Fragment {
             sharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
             editor = sharedPref.edit();
         }
+
+       /* private void setNextCue() {
+            int cueNum = sharedPref.getInt("cueNum", -1);
+            if (cueNum < 0) {
+                nextCue = "All cues finished";
+            }
+            CardViewModel cardViewModel = new ViewModelProvider((ViewModelStoreOwner) this).get(CardViewModel.class);
+            cardViewModel.getCueListMutableLiveData().observe((LifecycleOwner) this, new Observer<ArrayList<Cue>>() {
+                @Override
+                public void onChanged(ArrayList<Cue> cues) {
+                    if (cues != null) {
+                        nextCue = cues.get(sharedPref.getInt("cueNum", 0)).cue;
+                    }
+                }
+            });
+        }*/
 
         private NotificationCompat.Builder createNotification() {
             String newCue = sharedPref.getString("currentCue", "New Cue");
