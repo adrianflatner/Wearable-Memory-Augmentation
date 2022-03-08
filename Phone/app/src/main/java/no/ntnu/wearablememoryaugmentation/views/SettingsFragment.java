@@ -1,9 +1,13 @@
 package no.ntnu.wearablememoryaugmentation.views;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -14,19 +18,39 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+
+import com.google.android.gms.common.util.ArrayUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import no.ntnu.wearablememoryaugmentation.R;
 import no.ntnu.wearablememoryaugmentation.viewModel.HomeViewModel;
 import no.ntnu.wearablememoryaugmentation.viewModel.SettingsViewModel;
 
-public class SettingsFragment extends Fragment {
+public class SettingsFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
     private SettingsViewModel settingsViewModel;
+    private SharedPreferences sharedPref;
+    private SharedPreferences.Editor editor;
+
+    String[] cuingModes;
+    String[] timings;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
+
+        sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        editor = sharedPref.edit();
+
+        cuingModes = getResources().getStringArray(R.array.cuingModes);
+        timings = getResources().getStringArray(R.array.timings);
 
         settingsViewModel.getLoggedOutMutableLiveData().observe(this, new Observer<Boolean>() {
             @Override
@@ -44,23 +68,31 @@ public class SettingsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
         Spinner cuingSpinner = (Spinner) view.findViewById(R.id.cuing_spinner);
+        cuingSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> cuingAdapter = ArrayAdapter.createFromResource(inflater.getContext(),
                 R.array.cuingModes, R.layout.spinner);
         cuingAdapter.setDropDownViewResource(R.layout.spinner_item);
         cuingSpinner.setAdapter(cuingAdapter);
+        int cuingPosition = cuingAdapter.getPosition(sharedPref.getString("cuingMode", "Phone"));
+        cuingSpinner.setSelection(cuingPosition);
 
         Spinner timingSpinner = (Spinner) view.findViewById(R.id.timing_spinner);
+        timingSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> timingAdapter = ArrayAdapter.createFromResource(inflater.getContext(),
                 R.array.timings, R.layout.spinner);
         timingAdapter.setDropDownViewResource(R.layout.spinner_item);
         timingSpinner.setAdapter(timingAdapter);
-
+        int timingPosition = timingAdapter.getPosition(sharedPref.getString("timings", "Random"));
+        timingSpinner.setSelection(timingPosition);
 
         Spinner notificationsSpinner = (Spinner) view.findViewById(R.id.notifications_spinner);
+        notificationsSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> notificationsAdapter = ArrayAdapter.createFromResource(inflater.getContext(),
                 R.array.notifications, R.layout.spinner);
         notificationsAdapter.setDropDownViewResource(R.layout.spinner_item);
         notificationsSpinner.setAdapter(notificationsAdapter);
+        int notPosition = notificationsAdapter.getPosition(sharedPref.getString("notifications", "On"));
+        notificationsSpinner.setSelection(notPosition);
 
         TextView logOutButton = view.findViewById(R.id.log_out_button);
 
@@ -90,4 +122,34 @@ public class SettingsFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        String name;
+        String value = String.valueOf(adapterView.getItemAtPosition(i));
+        Log.e("VALUE", value);
+        if(ArrayUtils.contains(cuingModes, value)){
+            name = "cuingMode";
+        }
+        else if (ArrayUtils.contains(timings, value) && !value.equals(sharedPref.getString("timings", "null"))){
+            name = "timings";
+            PeriodicWorkRequest nextCueRequest =
+                    new PeriodicWorkRequest.Builder(HomeFragment.CueWorker.class, HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
+                            // Constraints
+                            .setInitialDelay(HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
+                            .build();
+            WorkManager.getInstance(getContext())
+                    .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.REPLACE, nextCueRequest);
+        }
+        else{
+            name = "notifications";
+        }
+
+        editor.putString(name, value);
+        editor.commit();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
+    }
 }

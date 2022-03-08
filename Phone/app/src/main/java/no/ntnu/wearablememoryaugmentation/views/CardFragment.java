@@ -2,6 +2,7 @@ package no.ntnu.wearablememoryaugmentation.views;
 
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,20 +38,37 @@ public class CardFragment extends Fragment {
     private TextView finishButton;
     private ArrayList<Cue> cueArrayList;
 
+    private int cueNum;
+
+    public CardFragment(int cueNum){
+        this.cueNum = cueNum;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+        SharedPreferences sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+
         cardViewModel = new ViewModelProvider(this).get(CardViewModel.class);
         cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
             @Override
             public void onChanged(ArrayList<Cue> cues) {
-                int i = 0;
                 if (cues != null) {
-                    cueText.setText(cues.get(i).cue);
-                    cueTextSmall.setText(cues.get(i).cue);
-                    cueInfo.setText(cues.get(i).info);
+                    cueNum = cueNum < 0 ? 0 : cueNum;
+                    cueNum = cues.size() <= cueNum ? cues.size()-1 : cueNum;
+                    editor.putInt("cueNum", cueNum);
+                    try {
+                        editor.putString("currentCue", cues.get(cueNum+1).cue);
+                    } catch (Exception e){
+                        editor.putString("currentCue", "Finished with all cues");
+                    }
+                    editor.commit();
+                    cueText.setText(cues.get(cueNum).cue);
+                    cueTextSmall.setText(cues.get(cueNum).cue);
+                    cueInfo.setText(cues.get(cueNum).info);
                     cueArrayList = cues;
                 }
             }
@@ -86,6 +104,8 @@ public class CardFragment extends Fragment {
                 flipCard(inflater.getContext(), front, back);
             }
         });
+
+
 
         return view;
     }
