@@ -14,7 +14,7 @@
         android:textAlignment="center"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <FrameLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/card_placeholder"
         android:layout_width="match_parent"
         android:layout_height="300dp"
@@ -25,13 +25,18 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.299">
 
-    <include
-        layout="@layout/card_off"
-        android:id="@+id/card_off_visibility"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
-    </FrameLayout>
+        <include
+            android:id="@+id/card_off_visibility"
+            layout="@layout/card_off"
+            android:layout_width="310dp"
+            android:layout_height="180dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <FrameLayout
         android:id="@+id/navigation_placeholder"
@@ -40,12 +45,12 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent" >
+        app:layout_constraintStart_toStartOf="parent">
+
         <include
             layout="@layout/fragment_navigation"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
-          />
+            android:layout_height="150dp" />
     </FrameLayout>
 
     <TextView
