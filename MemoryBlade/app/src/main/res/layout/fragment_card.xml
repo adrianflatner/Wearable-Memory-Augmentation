@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="152dp"
+        android:text="Hello"
         android:textColor="@color/app_green"
         android:textSize="40sp"
         app:layout_constraintEnd_toEndOf="parent"

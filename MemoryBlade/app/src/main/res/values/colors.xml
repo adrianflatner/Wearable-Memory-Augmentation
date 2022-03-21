@@ -21,4 +21,5 @@
     <color name="app_yellow_transparent">#4DE9D8A6</color>
     <color name="app_background_transparent">#CC001219</color>
     <color name="app_white_3_transparent">#08FFFFFF</color>
+    <color name="app_transparent">#FFFFFFFF</color>
 </resources>

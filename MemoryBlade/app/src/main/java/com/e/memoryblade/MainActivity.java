@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -22,70 +23,11 @@ import org.jetbrains.annotations.Nullable;
 
 import kotlin.jvm.internal.Intrinsics;
 
-public class MainActivity extends ActionMenuActivity {
-    private MenuItem HelloMenuItem;
-    private MenuItem VuzixMenuItem;
-    private MenuItem BladeMenuItem;
-    private TextView mainText;
+public class MainActivity extends AppCompatActivity {
 
-
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setContentView(R.layout.activity_main);
-    }
-
-    public boolean onCreateActionMenu(@NotNull Menu menu) {
-        super.onCreateActionMenu(menu);
-        this.getMenuInflater().inflate(R.menu.menu, menu);
-        this.HelloMenuItem = menu.findItem(R.id.item1);
-        this.VuzixMenuItem = menu.findItem(R.id.item2);
-        this.BladeMenuItem = menu.findItem(R.id.item3);
-        //this.mainText = this.findViewById(R.id.mainTextView);
-        this.updateMenuItems();
-        return true;
-    }
-
-    protected boolean alwaysShowActionMenu() {
-        return false;
-    }
-
-    private void updateMenuItems() {
-        if (HelloMenuItem == null) {
-            return;
-        }
-        VuzixMenuItem.setEnabled(false);
-        BladeMenuItem.setEnabled(false);
-    }
-
-    //Action Menu Click events
-    //This events where register via the XML for the menu definitions.
-    public void showHello(MenuItem item){
-
-        showToast("Hello World!");
-        mainText.setText("Hello World!");
-        VuzixMenuItem.setEnabled(true);
-        BladeMenuItem.setEnabled(true);
-    }
-
-    public void showVuzix(MenuItem item){
-        showToast("Vuzix!");
-        mainText.setText("Vuzix!");
-    }
-
-    public void showBlade(MenuItem item){
-        showToast("Blade");
-        mainText.setText("Blade");
-    }
-
-    private void showToast(final String text){
-
-        final Activity activity = this;
-
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
-            }
-        });
+        setContentView(R.layout.activity_main);
     }
 }
