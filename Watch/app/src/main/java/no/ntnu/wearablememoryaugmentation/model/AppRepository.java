@@ -1,10 +1,19 @@
 package no.ntnu.wearablememoryaugmentation.model;
 
 import android.app.Application;
+import android.os.Build;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -15,21 +24,21 @@ import java.util.ArrayList;
 
 public class AppRepository {
     private Application application;
-    //private FirebaseAuth firebaseAuth;
-    //private MutableLiveData<FirebaseUser> userMutableLiveData;
+    private FirebaseAuth firebaseAuth;
+    private MutableLiveData<FirebaseUser> userMutableLiveData;
     private MutableLiveData<Boolean> loggedOutMutableLiveData;
     private DatabaseReference dbRef;
     private FirebaseDatabase database;
     private MutableLiveData<ArrayList<Cue>> cueListMutableLiveData;
 
-    public AppRepository(Application application){
+    public AppRepository(Application application) {
         this.application = application;
 
         firebaseAuth = FirebaseAuth.getInstance();
         userMutableLiveData = new MutableLiveData<>();
         loggedOutMutableLiveData = new MutableLiveData<>();
 
-        if (firebaseAuth.getCurrentUser() != null){
+        if (firebaseAuth.getCurrentUser() != null) {
             userMutableLiveData.postValue(firebaseAuth.getCurrentUser());
             loggedOutMutableLiveData.postValue(false);
         }
@@ -40,12 +49,47 @@ public class AppRepository {
         cueListMutableLiveData = new MutableLiveData<ArrayList<Cue>>();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.P)
+    public void login(String email, String password) {
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(application.getMainExecutor(), new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            userMutableLiveData.postValue(firebaseAuth.getCurrentUser());
+                        } else {
+                            Toast.makeText(application, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.P)
+    public void register(String email, String password) {
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(application.getMainExecutor(), new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            userMutableLiveData.postValue(firebaseAuth.getCurrentUser());
+                        } else {
+                            Toast.makeText(application, "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    public void logout() {
+        firebaseAuth.signOut();
+        loggedOutMutableLiveData.postValue(true);
+    }
+
     public MutableLiveData<ArrayList<Cue>> getCueListMutableLiveData() {
         ArrayList<Cue> cueList = new ArrayList<>();
         dbRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()){
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     Cue cue = snapshot.getValue(Cue.class);
                     cueList.add(cue);
                 }
@@ -54,9 +98,11 @@ public class AppRepository {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.e("DEBUGCUE", "onCancelled()");
             }
         });
+
+        Log.v("DEBUGCUE", "Cue List Returned");
         return cueListMutableLiveData;
     }
 
