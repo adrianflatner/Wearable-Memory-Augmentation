@@ -1,5 +1,9 @@
 package no.ntnu.wearablememoryaugmentation.views;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +15,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -22,6 +28,9 @@ import no.ntnu.wearablememoryaugmentation.model.Cue;
 import no.ntnu.wearablememoryaugmentation.viewModel.CardViewModel;
 
 public class CardFragment extends Fragment {
+    public static final String CHANNEL_ID = "channelid";
+    private NotificationManagerCompat notificationManager;
+
     private CardViewModel cardViewModel;
     private TextView cueText;
     private ArrayList<Cue> cueArrayList;
@@ -51,6 +60,21 @@ public class CardFragment extends Fragment {
                 }
             }
         });
+        createNotificationChannels();
+        notificationManager = NotificationManagerCompat.from(this.getContext());
+    }
+
+    private void createNotificationChannels() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Channel 1",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = this.getContext().getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
+
     }
 
     @Nullable
@@ -72,6 +96,14 @@ public class CardFragment extends Fragment {
                     cueText.setText(cueArrayList.get(cueCounter).cue);
                     isCue = true;
                 }
+
+                Notification notification = new NotificationCompat.Builder(view.getContext(),
+                        CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_baseline_access_time_24)
+                        .setContentTitle("TestTitle")
+                        .setContentText("ContentText")
+                        .build();
+                notificationManager.notify(1,notification);
             }
         });
 
@@ -110,4 +142,5 @@ public class CardFragment extends Fragment {
 
         return view;
     }
+
 }
