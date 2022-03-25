@@ -1,4 +1,4 @@
-package com.e.memoryblade.model;
+package no.ntnu.wearablememoryaugmentation.model;
 
 public class Cue {
     public String cue;

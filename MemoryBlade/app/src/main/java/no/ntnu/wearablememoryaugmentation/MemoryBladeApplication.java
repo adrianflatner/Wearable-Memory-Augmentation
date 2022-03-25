@@ -1,5 +1,6 @@
-package com.e.memoryblade;
+package no.ntnu.wearablememoryaugmentation;
 
+import no.ntnu.wearablememoryaugmentation.R;
 import com.vuzix.hud.resources.DynamicThemeApplication;
 
 public class MemoryBladeApplication extends DynamicThemeApplication {

@@ -1,4 +1,4 @@
-package com.e.memoryblade
+package no.ntnu.wearablememoryaugmentation
 
 import org.junit.Test
 

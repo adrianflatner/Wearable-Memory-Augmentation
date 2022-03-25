@@ -1,4 +1,4 @@
-package com.e.memoryblade;
+package no.ntnu.wearablememoryaugmentation;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,8 +12,10 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.e.memoryblade.model.Cue;
-import com.e.memoryblade.viewModel.CardViewModel;
+import no.ntnu.wearablememoryaugmentation.R;
+
+import no.ntnu.wearablememoryaugmentation.model.Cue;
+import no.ntnu.wearablememoryaugmentation.viewModel.CardViewModel;
 
 import java.util.ArrayList;
 

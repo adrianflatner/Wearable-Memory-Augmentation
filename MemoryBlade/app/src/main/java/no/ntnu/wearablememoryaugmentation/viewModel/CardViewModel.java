@@ -1,4 +1,4 @@
-package com.e.memoryblade.viewModel;
+package no.ntnu.wearablememoryaugmentation.viewModel;
 
 import android.app.Application;
 
@@ -6,8 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
-import com.e.memoryblade.model.AppRepository;
-import com.e.memoryblade.model.Cue;
+import no.ntnu.wearablememoryaugmentation.model.AppRepository;
+import no.ntnu.wearablememoryaugmentation.model.Cue;
 
 import java.util.ArrayList;
 

@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "no.ntnu.wearablememoryaugmentation"
-        minSdk 21
+        minSdk 22
         targetSdk 31
         versionCode 1
         versionName "1.0"
@@ -43,4 +43,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     implementation "androidx.work:work-runtime:$work_version"
     implementation "androidx.core:core:$core_version"
+    implementation 'com.vuzix:connectivity-sdk:1.1'
 }

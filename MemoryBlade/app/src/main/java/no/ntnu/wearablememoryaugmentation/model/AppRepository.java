@@ -1,4 +1,4 @@
-package com.e.memoryblade.model;
+package no.ntnu.wearablememoryaugmentation.model;
 
 import android.app.Application;
 import android.os.Build;
@@ -20,7 +20,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class AppRepository {
 
