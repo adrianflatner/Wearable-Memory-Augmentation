@@ -10,8 +10,7 @@
         android:id="@+id/mainText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:text="Hello In the Center!" />
+        android:layout_centerHorizontal="true" />
 
     <FrameLayout
         android:id="@+id/placeholder"

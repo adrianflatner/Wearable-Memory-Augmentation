@@ -36,6 +36,11 @@ public class MainActivity extends ActionMenuActivity {
     private static final String CUE_TEXT = "CueText";
     private static final String CUE_INFO = "CueInfo";
 
+    private String currentCue;
+    private String currentInfo;
+
+    private int state = 0;
+
 
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,10 +55,13 @@ public class MainActivity extends ActionMenuActivity {
             return;
         }
         else{
-            Toast.makeText(this, "AVAILABLE", Toast.LENGTH_SHORT).show();
             Log.e("DEVICES", String.valueOf(Connectivity.get(getContext()).getDevices()));
         }
         mainText = findViewById(R.id.mainText);
+        currentCue = sharedPref.getString("currentCue", "Connect with phone");
+        currentInfo = sharedPref.getString("currentInfo", "Connect with phone");
+
+        mainText.setText(currentCue);
     }
 
     @Override
@@ -74,7 +82,6 @@ public class MainActivity extends ActionMenuActivity {
         this.CueMenuItem = menu.findItem(R.id.item1);
         this.InfoMenuItem = menu.findItem(R.id.item2);
         this.TutorialMenuItem = menu.findItem(R.id.item3);
-        //this.mainText = this.findViewById(R.id.mainTextView);
         this.updateMenuItems();
         return true;
     }
@@ -87,26 +94,26 @@ public class MainActivity extends ActionMenuActivity {
         if (CueMenuItem == null) {
             return;
         }
-        InfoMenuItem.setEnabled(false);
-        TutorialMenuItem.setEnabled(false);
+        //InfoMenuItem.setEnabled(false);
+        //TutorialMenuItem.setEnabled(false);
     }
 
     //Action Menu Click events
     //This events where register via the XML for the menu definitions.
     public void showCue(MenuItem item){
-        String cue = sharedPref.getString("currentCue", "Connect with phone");
-        showToast("Hello World!");
-        mainText.setText(cue);
-        InfoMenuItem.setEnabled(true);
-        TutorialMenuItem.setEnabled(true);
+        state = 0;
+        mainText.setText(currentCue);
+        //InfoMenuItem.setEnabled(true);
+        //TutorialMenuItem.setEnabled(true);
     }
 
     public void showInfo(MenuItem item){
-        showToast("Vuzix!");
-        mainText.setText("Vuzix!");
+        state = 1;
+        mainText.setText(currentInfo);
     }
 
     public void showTutorial(MenuItem item){
+        state = 2;
         showToast("Blade");
         mainText.setText("Blade");
     }
@@ -154,11 +161,10 @@ public class MainActivity extends ActionMenuActivity {
         public void onReceive(Context context, Intent intent) {
             if (Connectivity.get(context).verify(intent, "no.ntnu.wearablememoryaugmentation")) {
                 String cueText = intent.getStringExtra(CUE_TEXT);
-                Log.e("CUE", "INCOMING");
                 if (cueText != null) {
                     editor.putString("currentCue", cueText);
                     editor.commit();
-                    mainText.setText(cueText);
+                    currentCue = cueText;
                 }
 
                 String cueInfo = intent.getStringExtra(CUE_INFO);
@@ -166,7 +172,21 @@ public class MainActivity extends ActionMenuActivity {
                     Toast.makeText(context, cueInfo, Toast.LENGTH_SHORT).show();
                     editor.putString("currentInfo", cueInfo);
                     editor.commit();
-                    //mainText.setText(cueInfo);
+                    currentInfo = cueInfo;
+                }
+
+                if(state == 0){
+                    mainText.setText(currentCue);
+                    Log.e("state", "0");
+                    Log.e("stateInternally", String.valueOf(state));
+                }
+                else if(state == 1){
+                    mainText.setText(currentInfo);
+                    Log.e("state", "1");
+                    Log.e("stateInternally", String.valueOf(state));
+                }
+                else{
+                    // Todo
                 }
             }
         }
