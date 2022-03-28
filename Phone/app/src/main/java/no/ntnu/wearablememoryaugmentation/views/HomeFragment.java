@@ -3,10 +3,11 @@ package no.ntnu.wearablememoryaugmentation.views;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,10 +24,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.navigation.Navigation;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
@@ -33,32 +33,41 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.vuzix.connectivity.sdk.Connectivity;
 
-import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import no.ntnu.wearablememoryaugmentation.R;
 import no.ntnu.wearablememoryaugmentation.model.Cue;
-import no.ntnu.wearablememoryaugmentation.viewModel.CardViewModel;
 import no.ntnu.wearablememoryaugmentation.viewModel.HomeViewModel;
 
 public class HomeFragment extends Fragment {
 
     private TextView loggedInUserTextView;
     private View settingsButton;
+    private View on_off_button;
     private Boolean isOn;
     private HomeViewModel homeViewModel;
     private TextView previousButton;
     private TextView nextButton;
     private int cueNum;
+    private String device;
     private String repeatInterval;
     private Fragment cardFragment;
     private FragmentTransaction transaction;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
     private int notificationId = 0;
+    private static final String CUE_TEXT = "CueText";
+    private static final String CUE_INFO = "CueInfo";
+    private static final String ACTION_SEND = "no.ntnu.wearablememoryaugmentation.SEND";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,8 +79,13 @@ public class HomeFragment extends Fragment {
         cueNum = sharedPref.getInt("cueNum", 0);
         repeatInterval = sharedPref.getString("timing", "Random");
         isOn = sharedPref.getBoolean("isOn", true);
+        device = sharedPref.getString("cuingMode", "Phone");
         Log.e("ISON", isOn.toString());
 
+        if (!Connectivity.get(getContext()).isAvailable()) {
+            Toast.makeText(getContext(), "Glasses not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (isOn) {
             homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
@@ -119,7 +133,6 @@ public class HomeFragment extends Fragment {
                 }
             });
         }
-
     }
 
     @Nullable
@@ -131,7 +144,7 @@ public class HomeFragment extends Fragment {
                 loggedInUserTextView.setVisibility(View.GONE);
         settingsButton = view.findViewById(R.id.settingsButton);
         View cardOff = view.findViewById(R.id.card_off_visibility);
-        View on_off_button = view.findViewById(R.id.on_off_button);
+        on_off_button = view.findViewById(R.id.on_off_button);
         previousButton = view.findViewById(R.id.previousButton);
         nextButton = view.findViewById(R.id.nextButton);
 
@@ -142,11 +155,13 @@ public class HomeFragment extends Fragment {
             }
         });
 
+
         if (isOn) {
             newCue();
             previousButton.setVisibility(View.VISIBLE);
             nextButton.setVisibility(View.VISIBLE);
-            on_off_button.setBackgroundResource(R.drawable.ic_on_button);
+            Log.e("DEVICE", device);
+            setDeviceIcon();
         } else {
             cardOff.setVisibility(View.VISIBLE);
             previousButton.setVisibility(View.GONE);
@@ -171,7 +186,7 @@ public class HomeFragment extends Fragment {
                             .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.REPLACE, nextCueRequest);
                     newCue();
                     cardOff.setVisibility(View.GONE);
-                    on_off_button.setBackgroundResource(R.drawable.ic_on_button);
+                    setDeviceIcon();
                     previousButton.setVisibility(View.VISIBLE);
                     nextButton.setVisibility(View.VISIBLE);
                 } else {
@@ -202,14 +217,19 @@ public class HomeFragment extends Fragment {
                         switch (which){
                             case 1:
                                 on_off_button.setBackgroundResource(R.drawable.ic_watch);
+                                device = "Watch";
                                 break;
                             case 2:
                                 on_off_button.setBackgroundResource(R.drawable.ic_glasses);
+                                device = "Glasses";
                                 break;
                             default:
                                 on_off_button.setBackgroundResource(R.drawable.ic_on_button);
+                                device = "Phone";
                                 break;
                         }
+                        editor.putString("cuingMode", device);
+                        editor.commit();
                     }
                 });
                 builder.show();
@@ -223,6 +243,9 @@ public class HomeFragment extends Fragment {
                 cueNum = sharedPref.getInt("cueNum", 0);
                 cueNum -= 1;
                 newCue();
+                if(device.equals("Glasses")){
+                    sendCue();
+                }
             }
         });
 
@@ -232,10 +255,26 @@ public class HomeFragment extends Fragment {
                 cueNum = sharedPref.getInt("cueNum", 0);
                 cueNum += 1;
                 newCue();
+                if(device.equals("Glasses")){
+                    sendCue();
+                }
             }
         });
 
         return view;
+    }
+
+    private void setDeviceIcon(){
+        switch (device){
+            case "Watch":
+                on_off_button.setBackgroundResource(R.drawable.ic_watch);
+                break;
+            case "Glasses":
+                on_off_button.setBackgroundResource(R.drawable.ic_glasses);
+                break;
+            default:
+                on_off_button.setBackgroundResource(R.drawable.ic_on_button);
+        }
     }
 
     private void newCue() {
@@ -285,11 +324,27 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    public void sendCue() {
+        Log.e("DEVICES", String.valueOf(Connectivity.get(getContext()).isConnected()));
+        String cue = sharedPref.getString("currentCue", "No cue");
+        String cueInfo = sharedPref.getString("currentInfo", "No cue");
+        Intent sendIntent = new Intent(ACTION_SEND);
+        sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
+        sendIntent.putExtra(CUE_TEXT, cue);
+        sendIntent.putExtra(CUE_INFO, cueInfo);
+        Connectivity.get(getContext()).sendBroadcast(sendIntent);
+        Log.e("SEND", "SENT");
+    }
+
     public static class CueWorker extends Worker {
         private Context context;
         private int notificationId = 0;
         private SharedPreferences sharedPref;
         private SharedPreferences.Editor editor;
+        private int cueNum;
+        private String nextCueText;
+        private String nextCueInfo;
+        private String device;
         //private String nextCue;
 
 
@@ -300,40 +355,77 @@ public class HomeFragment extends Fragment {
             this.context = context;
             sharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
             editor = sharedPref.edit();
+            cueNum = sharedPref.getInt("cueNum", 0) + 1;
+            device = sharedPref.getString("cuingMode", "Phone");
+
         }
 
-       /* private void setNextCue() {
-            int cueNum = sharedPref.getInt("cueNum", -1);
-            if (cueNum < 0) {
-                nextCue = "All cues finished";
-            }
-            CardViewModel cardViewModel = new ViewModelProvider((ViewModelStoreOwner) this).get(CardViewModel.class);
-            cardViewModel.getCueListMutableLiveData().observe((LifecycleOwner) this, new Observer<ArrayList<Cue>>() {
+        private void fetchCues(){
+            final FirebaseDatabase database = FirebaseDatabase.getInstance("https://wearable-memory-augmentation-default-rtdb.europe-west1.firebasedatabase.app");
+            final DatabaseReference dbRef = database.getReference("cues");
+            int cueNumFB = cueNum + 1;
+            dbRef.child(String.valueOf(cueNumFB)).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
                 @Override
-                public void onChanged(ArrayList<Cue> cues) {
-                    if (cues != null) {
-                        nextCue = cues.get(sharedPref.getInt("cueNum", 0)).cue;
+                public void onComplete(@NonNull Task<DataSnapshot> task) {
+                    if (!task.isSuccessful()) {
+                        Log.e("firebase", "Error getting data", task.getException());
+
+                    }
+                    else {
+                        if(task.getResult().getValue() == null){
+                            nextCueText = "Finished with all cues";
+                            nextCueInfo = nextCueText;
+                        }
+                        else{
+                            Log.e("FIREBASERESULTS", String.valueOf(task.getResult().getValue()));
+                            Cue nextCue = task.getResult().getValue(Cue.class);
+                            nextCueText = nextCue.cue;
+                            nextCueInfo = nextCue.info;
+                            Log.e("CUE", nextCue.cue);
+                        }
                     }
                 }
             });
-        }*/
+            //cueListMutableLiveData = new MutableLiveData<ArrayList<Cue>>();
+        }
 
         private NotificationCompat.Builder createNotification() {
-            String newCue = sharedPref.getString("currentCue", "New Cue");
+            //String newCue = sharedPref.getString("currentCue", "New Cue");
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "cueChannel")
                     .setSmallIcon(R.drawable.ic_logo_big)
-                    .setContentTitle(newCue)
+                    .setContentTitle(nextCueText)
                     .setContentText("Tap to see cue!")
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+            PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
+                    new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+            builder.setContentIntent(contentIntent);
+
             return builder;
+        }
+
+        public void sendCue() {
+            Intent sendIntent = new Intent(ACTION_SEND);
+            sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
+            sendIntent.putExtra(CUE_TEXT, nextCueText);
+            sendIntent.putExtra(CUE_INFO, nextCueInfo);
+            Connectivity.get(context).sendBroadcast(sendIntent);
+            Log.e("SEND", "SENT");
         }
 
         @Override
         public Result doWork() {
+            fetchCues();
 
-            int cueNum = sharedPref.getInt("cueNum", 0) + 1;
             editor.putInt("cueNum", cueNum);
+            editor.putString("currentCue", nextCueText);
+            editor.putString("currentInfo", nextCueInfo);
             editor.commit();
+
+            if(device.equals("Glasses")){
+                sendCue();
+            }
 
             String notifications = sharedPref.getString("notifications", "On");
             if (notifications.equals("On")) {

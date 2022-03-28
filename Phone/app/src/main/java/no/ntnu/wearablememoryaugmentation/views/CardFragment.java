@@ -61,8 +61,10 @@ public class CardFragment extends Fragment {
                     editor.putInt("cueNum", cueNum);
                     try {
                         editor.putString("currentCue", cues.get(cueNum+1).cue);
+                        editor.putString("currentInfo", cues.get(cueNum+1).info);
                     } catch (Exception e){
                         editor.putString("currentCue", "Finished with all cues");
+                        editor.putString("currentInfo", "Finished with all cues");
                     }
                     editor.commit();
                     cueText.setText(cues.get(cueNum).cue);
