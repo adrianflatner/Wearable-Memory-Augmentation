@@ -1,5 +1,6 @@
 package no.ntnu.wearablememoryaugmentation;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,14 +8,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import no.ntnu.wearablememoryaugmentation.R;
 import com.vuzix.connectivity.sdk.Connectivity;
 import com.vuzix.connectivity.sdk.Device;
 import com.vuzix.hud.actionmenu.ActionMenuActivity;
@@ -22,11 +24,14 @@ import com.vuzix.hud.actionmenu.ActionMenuActivity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import no.ntnu.wearablememoryaugmentation.R;
+
 public class MainActivity extends ActionMenuActivity {
     private MenuItem CueMenuItem;
     private MenuItem InfoMenuItem;
     private MenuItem TutorialMenuItem;
     private TextView mainText;
+    private View tutorialView;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
 
@@ -35,6 +40,9 @@ public class MainActivity extends ActionMenuActivity {
 
     private static final String CUE_TEXT = "CueText";
     private static final String CUE_INFO = "CueInfo";
+
+    private static final int CUE_SIZE = 30;
+    private static final int CUE_INFO_SIZE = 24;
 
     private String currentCue;
     private String currentInfo;
@@ -53,11 +61,11 @@ public class MainActivity extends ActionMenuActivity {
             Toast.makeText(this, "Not available", Toast.LENGTH_SHORT).show();
             finish();
             return;
-        }
-        else{
+        } else {
             Log.e("DEVICES", String.valueOf(Connectivity.get(getContext()).getDevices()));
         }
         mainText = findViewById(R.id.mainText);
+        tutorialView = findViewById(R.id.tutorial);
         currentCue = sharedPref.getString("currentCue", "Connect with phone");
         currentInfo = sharedPref.getString("currentInfo", "Connect with phone");
 
@@ -94,31 +102,69 @@ public class MainActivity extends ActionMenuActivity {
         if (CueMenuItem == null) {
             return;
         }
-        //InfoMenuItem.setEnabled(false);
-        //TutorialMenuItem.setEnabled(false);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                state = 1;
+                setMainText();
+                return true;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                state = 0;
+                setMainText();
+                return true;
+            default:
+                return super.onKeyDown(keyCode, event);
+        }
     }
 
     //Action Menu Click events
     //This events where register via the XML for the menu definitions.
-    public void showCue(MenuItem item){
+    public void showCue(MenuItem item) {
         state = 0;
-        mainText.setText(currentCue);
-        //InfoMenuItem.setEnabled(true);
-        //TutorialMenuItem.setEnabled(true);
+        switchView();
+        setMainText();
+        closeActionMenu(false);
+        updateMenuItems();
     }
 
-    public void showInfo(MenuItem item){
+    public void showInfo(MenuItem item) {
         state = 1;
-        mainText.setText(currentInfo);
+        switchView();
+        setMainText();
+        closeActionMenu(true);
+
     }
 
-    public void showTutorial(MenuItem item){
+    public void showTutorial(MenuItem item) {
         state = 2;
-        showToast("Blade");
-        mainText.setText("Blade");
+        switchView();
+        closeActionMenu(true);
     }
 
-    private void showToast(final String text){
+    private void switchView() {
+        if (state == 2) {
+            mainText.setVisibility(View.GONE);
+            tutorialView.setVisibility(View.VISIBLE);
+        } else {
+            mainText.setVisibility(View.VISIBLE);
+            tutorialView.setVisibility(View.GONE);
+        }
+    }
+
+    private void setMainText() {
+        if (state == 0) {
+            mainText.setText(currentCue);
+            mainText.setTextSize(CUE_SIZE);
+        } else {
+            mainText.setText(currentInfo);
+            mainText.setTextSize(CUE_INFO_SIZE);
+        }
+    }
+
+    private void showToast(final String text) {
 
         final Activity activity = this;
 
@@ -169,25 +215,15 @@ public class MainActivity extends ActionMenuActivity {
 
                 String cueInfo = intent.getStringExtra(CUE_INFO);
                 if (cueInfo != null) {
-                    Toast.makeText(context, cueInfo, Toast.LENGTH_SHORT).show();
                     editor.putString("currentInfo", cueInfo);
                     editor.commit();
                     currentInfo = cueInfo;
                 }
+                setMainText();
 
-                if(state == 0){
-                    mainText.setText(currentCue);
-                    Log.e("state", "0");
-                    Log.e("stateInternally", String.valueOf(state));
-                }
-                else if(state == 1){
-                    mainText.setText(currentInfo);
-                    Log.e("state", "1");
-                    Log.e("stateInternally", String.valueOf(state));
-                }
-                else{
-                    // Todo
-                }
+                PowerManager pm = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+                @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wakeLock = pm.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "TAG");
+                wakeLock.acquire();
             }
         }
     };

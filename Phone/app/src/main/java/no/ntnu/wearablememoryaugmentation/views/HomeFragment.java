@@ -3,6 +3,7 @@ package no.ntnu.wearablememoryaugmentation.views;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -51,11 +52,13 @@ public class HomeFragment extends Fragment {
 
     private TextView loggedInUserTextView;
     private View settingsButton;
+    private View on_off_button;
     private Boolean isOn;
     private HomeViewModel homeViewModel;
     private TextView previousButton;
     private TextView nextButton;
     private int cueNum;
+    private String device;
     private String repeatInterval;
     private Fragment cardFragment;
     private FragmentTransaction transaction;
@@ -76,15 +79,12 @@ public class HomeFragment extends Fragment {
         cueNum = sharedPref.getInt("cueNum", 0);
         repeatInterval = sharedPref.getString("timing", "Random");
         isOn = sharedPref.getBoolean("isOn", true);
+        device = sharedPref.getString("cuingMode", "Phone");
         Log.e("ISON", isOn.toString());
 
-
         if (!Connectivity.get(getContext()).isAvailable()) {
-            Toast.makeText(getContext(), "Not available", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Glasses not available", Toast.LENGTH_SHORT).show();
             return;
-        }
-        else{
-            Toast.makeText(getContext(), "AVAILABLE", Toast.LENGTH_SHORT).show();
         }
 
         if (isOn) {
@@ -133,7 +133,6 @@ public class HomeFragment extends Fragment {
                 }
             });
         }
-
     }
 
     @Nullable
@@ -145,7 +144,7 @@ public class HomeFragment extends Fragment {
                 loggedInUserTextView.setVisibility(View.GONE);
         settingsButton = view.findViewById(R.id.settingsButton);
         View cardOff = view.findViewById(R.id.card_off_visibility);
-        View on_off_button = view.findViewById(R.id.on_off_button);
+        on_off_button = view.findViewById(R.id.on_off_button);
         previousButton = view.findViewById(R.id.previousButton);
         nextButton = view.findViewById(R.id.nextButton);
 
@@ -156,11 +155,13 @@ public class HomeFragment extends Fragment {
             }
         });
 
+
         if (isOn) {
             newCue();
             previousButton.setVisibility(View.VISIBLE);
             nextButton.setVisibility(View.VISIBLE);
-            on_off_button.setBackgroundResource(R.drawable.ic_on_button);
+            Log.e("DEVICE", device);
+            setDeviceIcon();
         } else {
             cardOff.setVisibility(View.VISIBLE);
             previousButton.setVisibility(View.GONE);
@@ -185,7 +186,7 @@ public class HomeFragment extends Fragment {
                             .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.REPLACE, nextCueRequest);
                     newCue();
                     cardOff.setVisibility(View.GONE);
-                    on_off_button.setBackgroundResource(R.drawable.ic_on_button);
+                    setDeviceIcon();
                     previousButton.setVisibility(View.VISIBLE);
                     nextButton.setVisibility(View.VISIBLE);
                 } else {
@@ -216,14 +217,19 @@ public class HomeFragment extends Fragment {
                         switch (which){
                             case 1:
                                 on_off_button.setBackgroundResource(R.drawable.ic_watch);
+                                device = "Watch";
                                 break;
                             case 2:
                                 on_off_button.setBackgroundResource(R.drawable.ic_glasses);
+                                device = "Glasses";
                                 break;
                             default:
                                 on_off_button.setBackgroundResource(R.drawable.ic_on_button);
+                                device = "Phone";
                                 break;
                         }
+                        editor.putString("cuingMode", device);
+                        editor.commit();
                     }
                 });
                 builder.show();
@@ -237,6 +243,9 @@ public class HomeFragment extends Fragment {
                 cueNum = sharedPref.getInt("cueNum", 0);
                 cueNum -= 1;
                 newCue();
+                if(device.equals("Glasses")){
+                    sendCue();
+                }
             }
         });
 
@@ -246,11 +255,26 @@ public class HomeFragment extends Fragment {
                 cueNum = sharedPref.getInt("cueNum", 0);
                 cueNum += 1;
                 newCue();
-                sendCue();
+                if(device.equals("Glasses")){
+                    sendCue();
+                }
             }
         });
 
         return view;
+    }
+
+    private void setDeviceIcon(){
+        switch (device){
+            case "Watch":
+                on_off_button.setBackgroundResource(R.drawable.ic_watch);
+                break;
+            case "Glasses":
+                on_off_button.setBackgroundResource(R.drawable.ic_glasses);
+                break;
+            default:
+                on_off_button.setBackgroundResource(R.drawable.ic_on_button);
+        }
     }
 
     private void newCue() {
@@ -320,6 +344,7 @@ public class HomeFragment extends Fragment {
         private int cueNum;
         private String nextCueText;
         private String nextCueInfo;
+        private String device;
         //private String nextCue;
 
 
@@ -331,6 +356,8 @@ public class HomeFragment extends Fragment {
             sharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
             editor = sharedPref.edit();
             cueNum = sharedPref.getInt("cueNum", 0) + 1;
+            device = sharedPref.getString("cuingMode", "Phone");
+
         }
 
         private void fetchCues(){
@@ -369,6 +396,12 @@ public class HomeFragment extends Fragment {
                     .setContentTitle(nextCueText)
                     .setContentText("Tap to see cue!")
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+            PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
+                    new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+            builder.setContentIntent(contentIntent);
+
             return builder;
         }
 
@@ -390,8 +423,9 @@ public class HomeFragment extends Fragment {
             editor.putString("currentInfo", nextCueInfo);
             editor.commit();
 
-            sendCue();
-
+            if(device.equals("Glasses")){
+                sendCue();
+            }
 
             String notifications = sharedPref.getString("notifications", "On");
             if (notifications.equals("On")) {
