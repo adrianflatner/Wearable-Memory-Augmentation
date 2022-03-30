@@ -35,12 +35,15 @@ import androidx.work.WorkerParameters;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.vuzix.connectivity.sdk.Connectivity;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -69,9 +72,12 @@ public class HomeFragment extends Fragment {
     private static final String CUE_INFO = "CueInfo";
     private static final String ACTION_SEND = "no.ntnu.wearablememoryaugmentation.SEND";
 
+    private FirebaseAnalytics firebaseAnalytics;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
         createNotificationChannel();
 
         sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
@@ -133,6 +139,9 @@ public class HomeFragment extends Fragment {
                 }
             });
         }
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "HOME");
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle);
     }
 
     @Nullable
@@ -222,6 +231,7 @@ public class HomeFragment extends Fragment {
                             case 2:
                                 on_off_button.setBackgroundResource(R.drawable.ic_glasses);
                                 device = "Glasses";
+                                sendCue();
                                 break;
                             default:
                                 on_off_button.setBackgroundResource(R.drawable.ic_on_button);
@@ -246,6 +256,12 @@ public class HomeFragment extends Fragment {
                 if(device.equals("Glasses")){
                     sendCue();
                 }
+                else{
+                    Bundle bundle = new Bundle();
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "previous");
+                    bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                }
             }
         });
 
@@ -257,6 +273,12 @@ public class HomeFragment extends Fragment {
                 newCue();
                 if(device.equals("Glasses")){
                     sendCue();
+                }
+                else {
+                    Bundle bundle = new Bundle();
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "next");
+                    bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
                 }
             }
         });
@@ -345,6 +367,7 @@ public class HomeFragment extends Fragment {
         private String nextCueText;
         private String nextCueInfo;
         private String device;
+        private FirebaseAnalytics firebaseAnalytics;
         //private String nextCue;
 
 
@@ -353,6 +376,7 @@ public class HomeFragment extends Fragment {
                 @NonNull WorkerParameters params) {
             super(context, params);
             this.context = context;
+            firebaseAnalytics = FirebaseAnalytics.getInstance(context);
             sharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
             editor = sharedPref.edit();
             cueNum = sharedPref.getInt("cueNum", 0) + 1;
@@ -434,6 +458,19 @@ public class HomeFragment extends Fragment {
                 notificationManager.notify(notificationId, createNotification().build());
 
             }
+
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+            Date date = new Date(System.currentTimeMillis());
+
+            if(!device.equals("Glasses")) {
+                Bundle params = new Bundle();
+                params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "worker");
+                params.putString("cueLength", String.valueOf(nextCueText.length()));
+                params.putString("cueInfoLength", String.valueOf(nextCueInfo.length()));
+                params.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent("receiveNewCue", params);
+            }
+
             return Result.success();
         }
     }

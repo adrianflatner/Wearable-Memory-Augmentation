@@ -23,6 +23,7 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import com.google.android.gms.common.util.ArrayUtils;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
     private SettingsViewModel settingsViewModel;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
+    private FirebaseAnalytics firebaseAnalytics;
 
     String[] cuingModes;
     String[] timings;
@@ -44,6 +46,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
         settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
 
         sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
@@ -60,6 +63,10 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
                 }
             }
         });
+
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "SETTINGS");
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle);
     }
 
     @Nullable
@@ -129,6 +136,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
         Log.e("VALUE", value);
         if(ArrayUtils.contains(cuingModes, value)){
             name = "cuingMode";
+            firebaseAnalytics.setUserProperty("Device", value);
         }
         else if (ArrayUtils.contains(timings, value) && !value.equals(sharedPref.getString("timings", "null"))){
             name = "timings";
@@ -139,9 +147,11 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
                             .build();
             WorkManager.getInstance(getContext())
                     .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.REPLACE, nextCueRequest);
+            firebaseAnalytics.setUserProperty("Timing", value);
         }
         else{
             name = "notifications";
+            firebaseAnalytics.setUserProperty("Notifications", value);
         }
 
         editor.putString(name, value);

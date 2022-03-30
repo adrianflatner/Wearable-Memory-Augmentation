@@ -29,6 +29,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.firebase:firebase-analytics:20.1.0'
     def work_version = "2.7.1"
     def core_version = "1.7.0"
     implementation 'androidx.appcompat:appcompat:1.4.0'

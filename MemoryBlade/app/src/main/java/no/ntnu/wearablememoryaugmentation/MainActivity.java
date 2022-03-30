@@ -17,12 +17,16 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.vuzix.connectivity.sdk.Connectivity;
 import com.vuzix.connectivity.sdk.Device;
 import com.vuzix.hud.actionmenu.ActionMenuActivity;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import no.ntnu.wearablememoryaugmentation.R;
 
@@ -34,6 +38,7 @@ public class MainActivity extends ActionMenuActivity {
     private View tutorialView;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
+    private FirebaseAnalytics firebaseAnalytics;
 
     private static final String ACTION_SEND = "no.ntnu.wearablememoryaugmentation.SEND";
     private static final String ACTION_GET = "no.ntnu.wearablememoryaugmentation.GET";
@@ -53,6 +58,7 @@ public class MainActivity extends ActionMenuActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_main);
+        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
         sharedPref = getContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
 
@@ -79,8 +85,8 @@ public class MainActivity extends ActionMenuActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
         unregisterReceiver(receiver);
     }
 
@@ -221,9 +227,20 @@ public class MainActivity extends ActionMenuActivity {
                 }
                 setMainText();
 
-                PowerManager pm = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-                @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wakeLock = pm.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "TAG");
-                wakeLock.acquire();
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+                Date date = new Date(System.currentTimeMillis());
+
+                Bundle params = new Bundle();
+                params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "worker");
+                params.putString("cueLength", String.valueOf(cueText.length()));
+                params.putString("cueInfoLength", String.valueOf(cueInfo.length()));
+                params.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent("receiveNewCue", params);
+
+                PowerManager pm = (PowerManager) context.getApplicationContext().getSystemService(Context.POWER_SERVICE);
+                @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock mWakeLock = pm.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "wakeLock");
+                mWakeLock.acquire();
+                mWakeLock.release();
             }
         }
     };

@@ -19,7 +19,12 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import no.ntnu.wearablememoryaugmentation.R;
 import no.ntnu.wearablememoryaugmentation.model.Cue;
@@ -27,6 +32,7 @@ import no.ntnu.wearablememoryaugmentation.viewModel.CardViewModel;
 
 public class CardFragment extends Fragment {
 
+    private FirebaseAnalytics firebaseAnalytics;
     private CardViewModel cardViewModel;
     private TextView cueText;
     private TextView cueInfo;
@@ -47,6 +53,8 @@ public class CardFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         SharedPreferences sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -93,16 +101,29 @@ public class CardFragment extends Fragment {
         flipButton = view.findViewById(R.id.flip_button);
         finishButton = view.findViewById(R.id.finish_button);
 
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        Date date = new Date(System.currentTimeMillis());
+
         flipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), back, front);
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipToBack");
+                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                bundle.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
             }
         });
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), front, back);
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipToFront");
+                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                bundle.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
             }
         });
 
@@ -140,7 +161,6 @@ public class CardFragment extends Fragment {
                 public void onAnimationRepeat(@NonNull Animator animation) { }
             });
         } catch (Exception e) {
-
         }
     }
 
