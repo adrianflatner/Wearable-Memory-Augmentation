@@ -122,17 +122,11 @@ public class HomeFragment extends Fragment {
         }
 
         if (isOn) {
-
-            //String timing = sharedPref.getString("timing", "Random");
             PeriodicWorkRequest nextCueRequest =
                     new PeriodicWorkRequest.Builder(CueWorker.class, getRepeatInterval(repeatInterval), TimeUnit.MINUTES)
                             // Constraints
                             .setInitialDelay(getRepeatInterval(repeatInterval), TimeUnit.MINUTES)
                             .build();
-
-        /*WorkRequest nextCueRequest =
-                new OneTimeWorkRequest.Builder(CueWorker.class)
-                        .build();*/
 
             WorkManager
                     .getInstance(getContext())
@@ -378,6 +372,7 @@ public class HomeFragment extends Fragment {
         private List<Integer> currentIndexes = new ArrayList<>();
         private String participantId;
         private String databaseReference;
+        private String notifications;
         //private String nextCue;
 
 
@@ -394,6 +389,7 @@ public class HomeFragment extends Fragment {
             device = sharedPref.getString("cuingMode", "Phone");
             databaseReference = sharedPref.getString("cueSet", "cues");
             participantId = sharedPref.getString("participantId", "Not set");
+            notifications = sharedPref.getString("notifications", "On");
             String cueIndexes = sharedPref.getString("cueIndexes", "0");
             currentIndexes = Stream.of(cueIndexes.split(","))
                     .map(String::trim)
@@ -465,12 +461,10 @@ public class HomeFragment extends Fragment {
                 sendCue();
             }
 
-            String notifications = sharedPref.getString("notifications", "On");
             if (notifications.equals("On")) {
                 notificationId += 1;
                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
                 notificationManager.notify(notificationId, createNotification().build());
-
             }
 
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
