@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseUser;
 
 import no.ntnu.wearablememoryaugmentation.R;
@@ -31,6 +32,7 @@ public class LoginRegisterFragment extends Fragment {
     private Button loginButton;
     private Button registerButton;
     private LoginRegisterViewModel loginRegisterViewModel;
+    private FirebaseAnalytics firebaseAnalytics;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,6 +46,7 @@ public class LoginRegisterFragment extends Fragment {
                 }
             }
         });
+        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
     }
 
     @Nullable
@@ -71,6 +74,9 @@ public class LoginRegisterFragment extends Fragment {
 
                 if(email.length() > 0 && password.length() > 0){
                     loginRegisterViewModel.register(email, password);
+                    Bundle params = new Bundle();
+                    params.putString(FirebaseAnalytics.Param.METHOD, "email");
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SIGN_UP, params);
                 }
 
             }
@@ -85,6 +91,9 @@ public class LoginRegisterFragment extends Fragment {
 
                 if(email.length() > 0 && password.length() > 0){
                     loginRegisterViewModel.login(email, password);
+                    Bundle params = new Bundle();
+                    params.putString(FirebaseAnalytics.Param.METHOD, "email");
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, params);
                 }
             }
         });

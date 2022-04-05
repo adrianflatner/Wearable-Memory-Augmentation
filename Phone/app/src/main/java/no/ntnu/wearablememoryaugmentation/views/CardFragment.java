@@ -3,7 +3,9 @@ package no.ntnu.wearablememoryaugmentation.views;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.animation.Animator;
 import androidx.core.animation.AnimatorInflater;
@@ -19,7 +22,18 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import no.ntnu.wearablememoryaugmentation.R;
 import no.ntnu.wearablememoryaugmentation.model.Cue;
@@ -27,6 +41,7 @@ import no.ntnu.wearablememoryaugmentation.viewModel.CardViewModel;
 
 public class CardFragment extends Fragment {
 
+    private FirebaseAnalytics firebaseAnalytics;
     private CardViewModel cardViewModel;
     private TextView cueText;
     private TextView cueInfo;
@@ -37,8 +52,8 @@ public class CardFragment extends Fragment {
     private View flipButton;
     private TextView finishButton;
     private ArrayList<Cue> cueArrayList;
-
     private int cueNum;
+    private static final int REPETITION = 4;
 
     public CardFragment(int cueNum){
         this.cueNum = cueNum;
@@ -48,29 +63,69 @@ public class CardFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
+
         SharedPreferences sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-
+        //editor.putInt("currentCueListLength", 0);
+        //editor.commit();
         cardViewModel = new ViewModelProvider(this).get(CardViewModel.class);
         cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onChanged(ArrayList<Cue> cues) {
                 if (cues != null) {
-                    cueNum = cueNum < 0 ? 0 : cueNum;
-                    cueNum = cues.size() <= cueNum ? cues.size()-1 : cueNum;
+                    List<Integer> currentIndexes = new ArrayList<>();
+                    int currentCueListLength = sharedPref.getInt("currentCueListLength", 0);
+                    Log.e("CUELISTLENGTH", String.valueOf(cues.size()));
+                    Log.e("CUELISTGET", String.valueOf(currentCueListLength));
+                    if(currentCueListLength != cues.size()){
+                            List<Integer> index = new ArrayList<>();
+                            for (int i = 0; i < cues.size(); i++) {
+                                index.add(i);
+                            }
+                            for (int i = 1; i <= REPETITION; i++) {
+                                currentIndexes.addAll(index);
+                            }
+                            Collections.shuffle(currentIndexes);
+                            editor.putString("cueIndexes", String.valueOf(currentIndexes).replace("[", "").replace("]", ""));
+                            editor.putInt("currentCueListLength", cues.size());
+                            editor.commit();
+                        }
+                    else{
+                        String cueIndexes = sharedPref.getString("cueIndexes", "0");
+                        currentIndexes = Stream.of(cueIndexes.split(","))
+                                .map(String::trim)
+                                .map(Integer::parseInt)
+                                .collect(Collectors.toList());
+                    }
+
+                    for(int i : currentIndexes){
+                        Log.e("INDEX", String.valueOf(i));
+                    }
+                    cueNum = cueNum < 0 ? -1 : cueNum;
+                    cueNum = currentIndexes.size() <= cueNum ? currentIndexes.size() : cueNum;
                     editor.putInt("cueNum", cueNum);
+                    if(cueNum >= currentIndexes.size() || cueNum < 0){
+                        cueText.setText("Finished with all cues");
+                        cueInfo.setText("Finished with all cues");
+                    }
+                    else{
+                        Log.e("CUENUM", String.valueOf(cueNum));
+                        Log.e("CURRENTINDEX", String.valueOf(currentIndexes.get(cueNum)));
+                        cueText.setText(cues.get(currentIndexes.get(cueNum)).cue);
+                        cueTextSmall.setText(cues.get(currentIndexes.get(cueNum)).cue);
+                        cueInfo.setText(cues.get(currentIndexes.get(cueNum)).info);
+                    }
+
                     try {
-                        editor.putString("currentCue", cues.get(cueNum+1).cue);
-                        editor.putString("currentInfo", cues.get(cueNum+1).info);
+                        editor.putString("currentCue", cues.get(currentIndexes.get(cueNum+1)).cue);
+                        editor.putString("currentInfo", cues.get(currentIndexes.get(cueNum+1)).info);
                     } catch (Exception e){
                         editor.putString("currentCue", "Finished with all cues");
                         editor.putString("currentInfo", "Finished with all cues");
                     }
                     editor.commit();
-                    cueText.setText(cues.get(cueNum).cue);
-                    cueTextSmall.setText(cues.get(cueNum).cue);
-                    cueInfo.setText(cues.get(cueNum).info);
-                    cueArrayList = cues;
                 }
             }
         });
@@ -93,22 +148,42 @@ public class CardFragment extends Fragment {
         flipButton = view.findViewById(R.id.flip_button);
         finishButton = view.findViewById(R.id.finish_button);
 
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        Date date = new Date(System.currentTimeMillis());
+
         flipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), back, front);
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipToBack");
+                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                bundle.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
             }
         });
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), front, back);
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipToFront");
+                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                bundle.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
             }
         });
 
-
-
         return view;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        /*for(int i=0; i<cueArrayList.size();i++){
+            Log.e("CUE", String.valueOf(cueArrayList.get(i).cue));
+        }*/
     }
 
     private void flipCard(Context context, View front, View back) {
@@ -140,7 +215,6 @@ public class CardFragment extends Fragment {
                 public void onAnimationRepeat(@NonNull Animator animation) { }
             });
         } catch (Exception e) {
-
         }
     }
 
