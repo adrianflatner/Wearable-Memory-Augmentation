@@ -39,6 +39,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
     private FirebaseAnalytics firebaseAnalytics;
+    private Boolean isOn;
 
     String[] cuingModes;
     String[] timings;
@@ -56,6 +57,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
         cuingModes = getResources().getStringArray(R.array.cuingModes);
         timings = getResources().getStringArray(R.array.timings);
         notifications = getResources().getStringArray(R.array.notifications);
+        isOn = sharedPref.getBoolean("isOn", true);
 
         settingsViewModel.getLoggedOutMutableLiveData().observe(this, new Observer<Boolean>() {
             @Override
@@ -154,13 +156,15 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
         }
         else if (ArrayUtils.contains(timings, value) && !value.equals(sharedPref.getString("timings", "null"))){
             name = "timings";
-            PeriodicWorkRequest nextCueRequest =
-                    new PeriodicWorkRequest.Builder(HomeFragment.CueWorker.class, HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
-                            // Constraints
-                            //.setInitialDelay(HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
-                            .build();
-            WorkManager.getInstance(getContext())
-                    .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.REPLACE, nextCueRequest);
+            if(isOn) {
+                PeriodicWorkRequest nextCueRequest =
+                        new PeriodicWorkRequest.Builder(HomeFragment.CueWorker.class, HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
+                                // Constraints
+                                //.setInitialDelay(HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
+                                .build();
+                WorkManager.getInstance(getContext())
+                        .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.REPLACE, nextCueRequest);
+            }
             firebaseAnalytics.setUserProperty("Timing", value);
         }
         else if(ArrayUtils.contains(notifications, value)){

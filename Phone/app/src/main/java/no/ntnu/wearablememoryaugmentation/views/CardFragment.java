@@ -160,6 +160,7 @@ public class CardFragment extends Fragment {
                 bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
                 bundle.putString("received", formatter.format(date));
                 firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                flipButton.setVisibility(View.GONE);
             }
         });
         finishButton.setOnClickListener(new View.OnClickListener() {
@@ -171,6 +172,7 @@ public class CardFragment extends Fragment {
                 bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
                 bundle.putString("received", formatter.format(date));
                 firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                finishButton.setVisibility(View.GONE);
             }
         });
 
@@ -208,6 +210,8 @@ public class CardFragment extends Fragment {
                 @Override
                 public void onAnimationEnd(@NonNull Animator animation) {
                     back.setVisibility(View.GONE);
+                    flipButton.setVisibility(View.VISIBLE);
+                    finishButton.setVisibility(View.VISIBLE);
                 }
                 @Override
                 public void onAnimationCancel(@NonNull Animator animation) { }
