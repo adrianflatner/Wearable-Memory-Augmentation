@@ -1,6 +1,8 @@
 package no.ntnu.wearablememoryaugmentation.model;
 
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.widget.Toast;
 
@@ -31,9 +33,13 @@ public class AppRepository {
     private DatabaseReference dbRef;
     private FirebaseDatabase database;
     private MutableLiveData<ArrayList<Cue>> cueListMutableLiveData;
+    private SharedPreferences sharedPref;
 
     public AppRepository(Application application){
         this.application = application;
+
+        sharedPref = application.getSharedPreferences("settings", Context.MODE_PRIVATE);
+        String databaseReference = sharedPref.getString("cueSet", "cues");
 
         firebaseAuth = FirebaseAuth.getInstance();
         userMutableLiveData = new MutableLiveData<>();
@@ -45,7 +51,7 @@ public class AppRepository {
         }
 
         database = FirebaseDatabase.getInstance("https://wearable-memory-augmentation-default-rtdb.europe-west1.firebasedatabase.app");
-        dbRef = database.getReference("cues");
+        dbRef = database.getReference(databaseReference);
 
         cueListMutableLiveData = new MutableLiveData<ArrayList<Cue>>();
     }

@@ -45,6 +45,7 @@ public class MainActivity extends ActionMenuActivity {
 
     private static final String CUE_TEXT = "CueText";
     private static final String CUE_INFO = "CueInfo";
+    private static final String P_ID = "PId";
 
     private static final int CUE_SIZE = 30;
     private static final int CUE_INFO_SIZE = 24;
@@ -226,6 +227,13 @@ public class MainActivity extends ActionMenuActivity {
                     currentInfo = cueInfo;
                 }
                 setMainText();
+
+                String participantId = intent.getStringExtra(P_ID);
+                if (participantId != null) {
+                    editor.putString("participantId", participantId);
+                    editor.commit();
+                    firebaseAnalytics.setUserId(participantId);
+                }
 
                 SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
                 Date date = new Date(System.currentTimeMillis());

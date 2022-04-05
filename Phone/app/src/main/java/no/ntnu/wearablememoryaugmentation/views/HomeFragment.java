@@ -75,6 +75,7 @@ public class HomeFragment extends Fragment {
     private int notificationId = 0;
     private static final String CUE_TEXT = "CueText";
     private static final String CUE_INFO = "CueInfo";
+    private static final String P_ID = "PId";
     private static final String ACTION_SEND = "no.ntnu.wearablememoryaugmentation.SEND";
 
     private FirebaseAnalytics firebaseAnalytics;
@@ -104,7 +105,7 @@ public class HomeFragment extends Fragment {
             public void onChanged(FirebaseUser firebaseUser) {
                 if (firebaseUser != null) {
                     //loggedInUserTextView.setText("Logged in user: " + firebaseUser.getEmail());
-                    firebaseAnalytics.setUserId(firebaseUser.getUid());
+                    //firebaseAnalytics.setUserId(firebaseUser.getUid());
                 }
             }
         });
@@ -354,10 +355,12 @@ public class HomeFragment extends Fragment {
         Log.e("DEVICES", String.valueOf(Connectivity.get(getContext()).isConnected()));
         String cue = sharedPref.getString("currentCue", "No cue");
         String cueInfo = sharedPref.getString("currentInfo", "No cue");
+        String participantId = sharedPref.getString("participantId", "Not set");
         Intent sendIntent = new Intent(ACTION_SEND);
         sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
         sendIntent.putExtra(CUE_TEXT, cue);
         sendIntent.putExtra(CUE_INFO, cueInfo);
+        sendIntent.putExtra(P_ID, participantId);
         Connectivity.get(getContext()).sendBroadcast(sendIntent);
         Log.e("SEND", "SENT");
     }
@@ -373,6 +376,8 @@ public class HomeFragment extends Fragment {
         private String device;
         private FirebaseAnalytics firebaseAnalytics;
         private List<Integer> currentIndexes = new ArrayList<>();
+        private String participantId;
+        private String databaseReference;
         //private String nextCue;
 
 
@@ -387,6 +392,8 @@ public class HomeFragment extends Fragment {
             editor = sharedPref.edit();
             cueNum = sharedPref.getInt("cueNum", 0) + 1;
             device = sharedPref.getString("cuingMode", "Phone");
+            databaseReference = sharedPref.getString("cueSet", "cues");
+            participantId = sharedPref.getString("participantId", "Not set");
             String cueIndexes = sharedPref.getString("cueIndexes", "0");
             currentIndexes = Stream.of(cueIndexes.split(","))
                     .map(String::trim)
@@ -396,7 +403,7 @@ public class HomeFragment extends Fragment {
 
         private void fetchCues() {
             final FirebaseDatabase database = FirebaseDatabase.getInstance("https://wearable-memory-augmentation-default-rtdb.europe-west1.firebasedatabase.app");
-            final DatabaseReference dbRef = database.getReference("cues");
+            final DatabaseReference dbRef = database.getReference(databaseReference);
             if (cueNum >= currentIndexes.size()) {
                 nextCueText = "Finished with all cues";
                 nextCueInfo = nextCueText;
@@ -440,6 +447,7 @@ public class HomeFragment extends Fragment {
             sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
             sendIntent.putExtra(CUE_TEXT, nextCueText);
             sendIntent.putExtra(CUE_INFO, nextCueInfo);
+            sendIntent.putExtra(P_ID, participantId);
             Connectivity.get(context).sendBroadcast(sendIntent);
             Log.e("SEND", "SENT");
         }
