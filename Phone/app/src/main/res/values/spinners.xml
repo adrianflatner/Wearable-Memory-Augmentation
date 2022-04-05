@@ -18,5 +18,15 @@
         <item>On</item>
         <item>Off</item>
     </string-array>
+
+    <string-array name="cueSet">
+        <item>cues</item>
+        <item>set_2</item>
+        <item>set_3</item>
+        <item>set_4</item>
+        <item>set_5</item>
+        <item>set_6</item>
+        <item>set_7</item>
+    </string-array>
 </resources>
 

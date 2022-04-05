@@ -42,6 +42,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
 
     String[] cuingModes;
     String[] timings;
+    String[] notifications;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,6 +55,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
 
         cuingModes = getResources().getStringArray(R.array.cuingModes);
         timings = getResources().getStringArray(R.array.timings);
+        notifications = getResources().getStringArray(R.array.notifications);
 
         settingsViewModel.getLoggedOutMutableLiveData().observe(this, new Observer<Boolean>() {
             @Override
@@ -101,6 +103,15 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
         int notPosition = notificationsAdapter.getPosition(sharedPref.getString("notifications", "On"));
         notificationsSpinner.setSelection(notPosition);
 
+        Spinner cueSetSpinner = (Spinner) view.findViewById(R.id.cueSet_spinner);
+        cueSetSpinner.setOnItemSelectedListener(this);
+        ArrayAdapter<CharSequence> cueSetAdapter = ArrayAdapter.createFromResource(inflater.getContext(),
+                R.array.cueSet, R.layout.spinner);
+        cueSetAdapter.setDropDownViewResource(R.layout.spinner_item);
+        cueSetSpinner.setAdapter(cueSetAdapter);
+        int cueSetPosition = cueSetAdapter.getPosition(sharedPref.getString("cueSet", "cues"));
+        cueSetSpinner.setSelection(cueSetPosition);
+
         TextView logOutButton = view.findViewById(R.id.log_out_button);
 
         logOutButton.setOnClickListener(new View.OnClickListener() {
@@ -126,6 +137,9 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
             }
         });
 
+        TextView participantId = view.findViewById(R.id.participantId);
+        participantId.setText(sharedPref.getString("participantId", "Id not set"));
+
         return view;
     }
 
@@ -149,9 +163,13 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
                     .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.REPLACE, nextCueRequest);
             firebaseAnalytics.setUserProperty("Timing", value);
         }
-        else{
+        else if(ArrayUtils.contains(notifications, value)){
             name = "notifications";
             firebaseAnalytics.setUserProperty("Notifications", value);
+        }
+        else{
+            name = "cueSet";
+            firebaseAnalytics.setUserProperty("CueSet", value);
         }
 
         editor.putString(name, value);

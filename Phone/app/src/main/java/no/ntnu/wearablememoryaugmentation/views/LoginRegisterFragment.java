@@ -1,7 +1,10 @@
 package no.ntnu.wearablememoryaugmentation.views;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,14 +32,19 @@ public class LoginRegisterFragment extends Fragment {
 
     private EditText emailEditText;
     private EditText passwordEditText;
+    private EditText participantIdEditText;
     private Button loginButton;
     private Button registerButton;
     private LoginRegisterViewModel loginRegisterViewModel;
     private FirebaseAnalytics firebaseAnalytics;
+    private SharedPreferences sharedPref;
+    private SharedPreferences.Editor editor;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        editor = sharedPref.edit();
         loginRegisterViewModel = new ViewModelProvider(this).get(LoginRegisterViewModel.class);
         loginRegisterViewModel.getUserMutableLiveData().observe(this, new Observer<FirebaseUser>() {
             @Override
@@ -62,6 +70,7 @@ public class LoginRegisterFragment extends Fragment {
 
         emailEditText = view.findViewById(R.id.fragment_loginregister_email);
         passwordEditText = view.findViewById(R.id.fragment_loginregister_password);
+        participantIdEditText = view.findViewById(R.id.login_register_participant);
         loginButton = view.findViewById(R.id.fragment_loginregister_login);
         registerButton = view.findViewById(R.id.fragment_loginregister_register);
 
@@ -71,9 +80,12 @@ public class LoginRegisterFragment extends Fragment {
             public void onClick(View view) {
                 String email = emailEditText.getText().toString();
                 String password = passwordEditText.getText().toString();
-
+                String participantId = participantIdEditText.getText().toString().trim();
                 if(email.length() > 0 && password.length() > 0){
                     loginRegisterViewModel.register(email, password);
+                    firebaseAnalytics.setUserId(participantId);
+                    editor.putString("participantId", participantId);
+                    editor.commit();
                     Bundle params = new Bundle();
                     params.putString(FirebaseAnalytics.Param.METHOD, "email");
                     firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SIGN_UP, params);
@@ -88,9 +100,13 @@ public class LoginRegisterFragment extends Fragment {
             public void onClick(View view) {
                 String email = emailEditText.getText().toString().trim();
                 String password = passwordEditText.getText().toString().trim();
+                String participantId = participantIdEditText.getText().toString().trim();
 
                 if(email.length() > 0 && password.length() > 0){
                     loginRegisterViewModel.login(email, password);
+                    firebaseAnalytics.setUserId(participantId);
+                    editor.putString("participantId", participantId);
+                    editor.commit();
                     Bundle params = new Bundle();
                     params.putString(FirebaseAnalytics.Param.METHOD, "email");
                     firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, params);
