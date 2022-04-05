@@ -91,7 +91,6 @@ public class LoginRegisterFragment extends Fragment {
 
                 if(email.length() > 0 && password.length() > 0){
                     loginRegisterViewModel.login(email, password);
-                    firebaseAnalytics.setUserId(email);
                     Bundle params = new Bundle();
                     params.putString(FirebaseAnalytics.Param.METHOD, "email");
                     firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, params);

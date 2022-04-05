@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
@@ -43,9 +44,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.vuzix.connectivity.sdk.Connectivity;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import no.ntnu.wearablememoryaugmentation.R;
 import no.ntnu.wearablememoryaugmentation.model.Cue;
@@ -93,17 +98,18 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        if (isOn) {
-            homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
-            homeViewModel.getUserMutableLiveData().observe(this, new Observer<FirebaseUser>() {
-                @Override
-                public void onChanged(FirebaseUser firebaseUser) {
-                    if (firebaseUser != null) {
-                        loggedInUserTextView.setText("Logged in user: " + firebaseUser.getEmail());
-                    }
+        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        homeViewModel.getUserMutableLiveData().observe(this, new Observer<FirebaseUser>() {
+            @Override
+            public void onChanged(FirebaseUser firebaseUser) {
+                if (firebaseUser != null) {
+                    //loggedInUserTextView.setText("Logged in user: " + firebaseUser.getEmail());
+                    firebaseAnalytics.setUserId(firebaseUser.getUid());
                 }
-            });
+            }
+        });
 
+        if (isOn) {
             homeViewModel.getLoggedOutMutableLiveData().observe(this, new Observer<Boolean>() {
                 @Override
                 public void onChanged(Boolean loggedOut) {
@@ -114,7 +120,7 @@ public class HomeFragment extends Fragment {
             });
         }
 
-        if(isOn) {
+        if (isOn) {
 
             //String timing = sharedPref.getString("timing", "Random");
             PeriodicWorkRequest nextCueRequest =
@@ -150,7 +156,7 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         loggedInUserTextView = view.findViewById(R.id.fragment_loggedin_loggedInUser);
-                loggedInUserTextView.setVisibility(View.GONE);
+        loggedInUserTextView.setVisibility(View.GONE);
         settingsButton = view.findViewById(R.id.settingsButton);
         View cardOff = view.findViewById(R.id.card_off_visibility);
         on_off_button = view.findViewById(R.id.on_off_button);
@@ -223,7 +229,7 @@ public class HomeFragment extends Fragment {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // the user clicked on colors[which]
-                        switch (which){
+                        switch (which) {
                             case 1:
                                 on_off_button.setBackgroundResource(R.drawable.ic_watch);
                                 device = "Watch";
@@ -253,10 +259,9 @@ public class HomeFragment extends Fragment {
                 cueNum = sharedPref.getInt("cueNum", 0);
                 cueNum -= 1;
                 newCue();
-                if(device.equals("Glasses")){
+                if (device.equals("Glasses")) {
                     sendCue();
-                }
-                else{
+                } else {
                     Bundle bundle = new Bundle();
                     bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "previous");
                     bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
@@ -271,10 +276,9 @@ public class HomeFragment extends Fragment {
                 cueNum = sharedPref.getInt("cueNum", 0);
                 cueNum += 1;
                 newCue();
-                if(device.equals("Glasses")){
+                if (device.equals("Glasses")) {
                     sendCue();
-                }
-                else {
+                } else {
                     Bundle bundle = new Bundle();
                     bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "next");
                     bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
@@ -286,8 +290,8 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
-    private void setDeviceIcon(){
-        switch (device){
+    private void setDeviceIcon() {
+        switch (device) {
             case "Watch":
                 on_off_button.setBackgroundResource(R.drawable.ic_watch);
                 break;
@@ -368,9 +372,11 @@ public class HomeFragment extends Fragment {
         private String nextCueInfo;
         private String device;
         private FirebaseAnalytics firebaseAnalytics;
+        private List<Integer> currentIndexes = new ArrayList<>();
         //private String nextCue;
 
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         public CueWorker(
                 @NonNull Context context,
                 @NonNull WorkerParameters params) {
@@ -381,26 +387,28 @@ public class HomeFragment extends Fragment {
             editor = sharedPref.edit();
             cueNum = sharedPref.getInt("cueNum", 0) + 1;
             device = sharedPref.getString("cuingMode", "Phone");
-
+            String cueIndexes = sharedPref.getString("cueIndexes", "0");
+            currentIndexes = Stream.of(cueIndexes.split(","))
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList());
         }
 
-        private void fetchCues(){
+        private void fetchCues() {
             final FirebaseDatabase database = FirebaseDatabase.getInstance("https://wearable-memory-augmentation-default-rtdb.europe-west1.firebasedatabase.app");
             final DatabaseReference dbRef = database.getReference("cues");
-            int cueNumFB = cueNum + 1;
-            dbRef.child(String.valueOf(cueNumFB)).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<DataSnapshot> task) {
-                    if (!task.isSuccessful()) {
-                        Log.e("firebase", "Error getting data", task.getException());
-
-                    }
-                    else {
-                        if(task.getResult().getValue() == null){
-                            nextCueText = "Finished with all cues";
-                            nextCueInfo = nextCueText;
-                        }
-                        else{
+            if (cueNum >= currentIndexes.size()) {
+                nextCueText = "Finished with all cues";
+                nextCueInfo = nextCueText;
+            } else {
+                int cueNumFB = currentIndexes.get(cueNum)+1;
+                Log.e("cueNumFB", String.valueOf(cueNumFB));
+                dbRef.child(String.valueOf(cueNumFB)).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DataSnapshot> task) {
+                        if (!task.isSuccessful()) {
+                            Log.e("firebase", "Error getting data", task.getException());
+                        } else {
                             Log.e("FIREBASERESULTS", String.valueOf(task.getResult().getValue()));
                             Cue nextCue = task.getResult().getValue(Cue.class);
                             nextCueText = nextCue.cue;
@@ -408,13 +416,11 @@ public class HomeFragment extends Fragment {
                             Log.e("CUE", nextCue.cue);
                         }
                     }
-                }
-            });
-            //cueListMutableLiveData = new MutableLiveData<ArrayList<Cue>>();
+                });
+            }
         }
 
         private NotificationCompat.Builder createNotification() {
-            //String newCue = sharedPref.getString("currentCue", "New Cue");
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "cueChannel")
                     .setSmallIcon(R.drawable.ic_logo_big)
                     .setContentTitle(nextCueText)
@@ -447,7 +453,7 @@ public class HomeFragment extends Fragment {
             editor.putString("currentInfo", nextCueInfo);
             editor.commit();
 
-            if(device.equals("Glasses")){
+            if (device.equals("Glasses")) {
                 sendCue();
             }
 
@@ -462,7 +468,7 @@ public class HomeFragment extends Fragment {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
             Date date = new Date(System.currentTimeMillis());
 
-            if(!device.equals("Glasses")) {
+            if (!device.equals("Glasses")) {
                 Bundle params = new Bundle();
                 params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "worker");
                 params.putString("cueLength", String.valueOf(nextCueText.length()));
