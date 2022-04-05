@@ -3,6 +3,9 @@ package no.ntnu.wearablememoryaugmentation.views;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,8 +23,20 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import no.ntnu.wearablememoryaugmentation.R;
 import no.ntnu.wearablememoryaugmentation.model.Cue;
@@ -38,8 +53,19 @@ public class CardFragment extends Fragment {
     private Button flipButton;
     private Button nextCueButton;
     private Button prevCueButton;
-    private int cueCounter = 0;
-    private boolean isCue = true;
+    private int cueNum = 0;
+    private boolean isCue;
+
+    private boolean tmpToggle = true;
+
+    public CardFragment(int cueNum){
+        this.cueNum = cueNum;
+        this.isCue = true;
+    }
+
+    public CardFragment(){
+        cueNum = 0;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,21 +76,31 @@ public class CardFragment extends Fragment {
         cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
             @Override
             public void onChanged(ArrayList<Cue> cues) {
-                Log.v("DEBUGCUE", "onChanged()-cardfragment");
-                int i = 0;
                 if (cues != null) {
-                    cueText.setText(cues.get(i).cue);
-                    //cueTextSmall.setText(cues.get(i).cue);
-                    //cueInfo.setText(cues.get(i).info);
+                    cueNum = cueNum < 0 ? 0 : cueNum;
+                    cueNum = cues.size() <= cueNum ? cues.size()-1 : cueNum;
+                    cueText.setText(cues.get(cueNum).cue);
+
                     cueArrayList = cues;
                 }
             }
         });
-        createNotificationChannels();
-        notificationManager = NotificationManagerCompat.from(this.getContext());
+        //createNotificationChannels();
+        //notificationManager = NotificationManagerCompat.from(this.getContext());
+
+        /*PeriodicWorkRequest nextCueRequest = new PeriodicWorkRequest.Builder(CueWorker.class, 15, TimeUnit.MINUTES)
+                .build();
+
+        WorkManager.getInstance(getContext())
+                .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.KEEP, nextCueRequest);
+
+        WorkManager.getInstance(getContext()).getWorkInfoByIdLiveData(nextCueRequest.getId()).observe(this, workInfo -> {
+            Log.e("NEW CUE", String.valueOf(cueCounter));
+            newCue();
+        });*/
     }
 
-    private void createNotificationChannels() {
+    /*private void createNotificationChannels() {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
@@ -75,7 +111,7 @@ public class CardFragment extends Fragment {
             manager.createNotificationChannel(channel);
         }
 
-    }
+    }*/
 
     @Nullable
     @Override
@@ -90,20 +126,26 @@ public class CardFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 if(isCue){
-                    cueText.setText(cueArrayList.get(cueCounter).info);
+                    cueText.setText(cueArrayList.get(cueNum).info);
                     isCue = false;
                 } else {
-                    cueText.setText(cueArrayList.get(cueCounter).cue);
+                    cueText.setText(cueArrayList.get(cueNum).cue);
                     isCue = true;
                 }
+
+               /* Intent intent = new Intent(view.getContext(), MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                PendingIntent pendingIntent = PendingIntent.getActivity(view.getContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
                 Notification notification = new NotificationCompat.Builder(view.getContext(),
                         CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_baseline_access_time_24)
-                        .setContentTitle("TestTitle")
-                        .setContentText("ContentText")
+                        .setContentTitle(cueArrayList.get(cueNum).cue)
+                        .setContentText("Tap to see cue")
+                        .setContentIntent(pendingIntent)
+                        .setAutoCancel(true)
                         .build();
-                notificationManager.notify(1,notification);
+                notificationManager.notify(1,notification);*/
             }
         });
 
@@ -111,10 +153,10 @@ public class CardFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 if(isCue){
-                    cueText.setText(cueArrayList.get(cueCounter).info);
+                    cueText.setText(cueArrayList.get(cueNum).info);
                     isCue = false;
                 } else {
-                    cueText.setText(cueArrayList.get(cueCounter).cue);
+                    cueText.setText(cueArrayList.get(cueNum).cue);
                     isCue = true;
                 }
             }
@@ -123,24 +165,93 @@ public class CardFragment extends Fragment {
         nextCueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                cueCounter++;
-                cueText.setText(cueArrayList.get(cueCounter).cue);
-                isCue = true;
+                if(cueNum < cueArrayList.size()-1){
+                    cueNum++;
+                    cueText.setText(cueArrayList.get(cueNum).cue);
+                    isCue = true;
+                }
             }
         });
 
         prevCueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(cueCounter > 0){
-                    cueCounter--;
+                if(cueNum > 0){
+                    cueNum--;
                 }
-                cueText.setText(cueArrayList.get(cueCounter).cue);
+                cueText.setText(cueArrayList.get(cueNum).cue);
                 isCue = true;
             }
         });
-
         return view;
     }
+
+    /*protected void newCue(){
+        cueNum++;
+        cueText.setText(cueArrayList.get(cueNum).cue);
+        isCue = true;
+    }*/
+
+    /*public static class CueWorker extends Worker{
+        private int cueNum;
+        private String nextCueText;
+        private String nextCueInfo;
+        private int notificationId = 0;
+        private Context context;
+
+        public CueWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+            super(context, workerParams);
+            cueNum = 0;
+            this.context = context;
+        }
+
+        private void fetchCues(){
+            final FirebaseDatabase database = FirebaseDatabase.getInstance("https://wearable-memory-augmentation-default-rtdb.europe-west1.firebasedatabase.app");
+            final DatabaseReference dbRef = database.getReference("cues");
+            int cueNumFB = cueNum + 1;
+            dbRef.child(String.valueOf(cueNumFB)).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DataSnapshot> task) {
+                    if(!task.isSuccessful()){
+                        Log.e("firebase", "Error geting data", task.getException());
+                    }
+                    else {
+                        if(task.getResult().getValue() == null){
+                            nextCueText = "Finished with all cues";
+                            nextCueInfo = nextCueText;
+                        }
+                        else {
+                            Log.v("FIREBASERESULTS", String.valueOf(task.getResult().getValue()));
+                            Cue nextCue = task.getResult().getValue(Cue.class);
+                            nextCueText = nextCue.cue;
+                            nextCueInfo = nextCue.info;
+                            Log.v("CUE", nextCue.cue);
+                            Log.v("CUE", nextCue.info);
+                        }
+                    }
+                }
+            });
+        }
+
+        private NotificationCompat.Builder createNotification() {
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "cueChannel")
+                    .setSmallIcon(R.drawable.ic_baseline_access_time_24)
+                    .setContentTitle(nextCueText)
+                    .setContentText("Tap to see cue!");
+            return builder;
+        }
+
+        @NonNull
+        @Override
+        public Result doWork() {
+            fetchCues();
+
+            notificationId++;
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+            notificationManager.notify(notificationId, createNotification().build());
+
+            return Result.success();
+        }
+    }*/
 
 }

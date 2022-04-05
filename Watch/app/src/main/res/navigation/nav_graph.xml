@@ -7,11 +7,7 @@
     <fragment
         android:id="@+id/homeFragment"
         android:name="no.ntnu.wearablememoryaugmentation.views.HomeFragment"
-        android:label="HomeFragment">
-        <action
-            android:id="@+id/action_homeFragment_to_cardFragment"
-            app:destination="@id/cardFragment" />
-    </fragment>
+        android:label="HomeFragment"/>
     <fragment
         android:id="@+id/cardFragment"
         android:name="no.ntnu.wearablememoryaugmentation.views.CardFragment"
