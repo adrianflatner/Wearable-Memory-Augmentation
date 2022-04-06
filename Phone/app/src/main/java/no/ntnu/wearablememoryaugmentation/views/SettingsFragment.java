@@ -120,6 +120,9 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
             @Override
             public void onClick(View view) {
                 settingsViewModel.logOut();
+                WorkManager
+                        .getInstance(getContext())
+                        .cancelAllWork();
             }
         });
 

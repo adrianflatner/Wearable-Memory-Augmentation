@@ -88,6 +88,7 @@ public class HomeFragment extends Fragment {
 
         sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
+        Log.e("All settings", String.valueOf(sharedPref.getAll()));
         cueNum = sharedPref.getInt("cueNum", 0);
         repeatInterval = sharedPref.getString("timing", "Random");
         isOn = sharedPref.getBoolean("isOn", true);
@@ -285,6 +286,20 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        cueNum = sharedPref.getInt("cueNum", 0);
+        newCue();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        cueNum = sharedPref.getInt("cueNum", 0);
+        newCue();
+    }
+
     private void setDeviceIcon() {
         switch (device) {
             case "Watch":
@@ -434,6 +449,7 @@ public class HomeFragment extends Fragment {
                     new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
 
             builder.setContentIntent(contentIntent);
+            builder.setAutoCancel(true);
 
             return builder;
         }

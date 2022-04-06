@@ -35,6 +35,7 @@ public class LoginRegisterFragment extends Fragment {
     private EditText participantIdEditText;
     private Button loginButton;
     private Button registerButton;
+    private Button resetSettings;
     private LoginRegisterViewModel loginRegisterViewModel;
     private FirebaseAnalytics firebaseAnalytics;
     private SharedPreferences sharedPref;
@@ -73,6 +74,7 @@ public class LoginRegisterFragment extends Fragment {
         participantIdEditText = view.findViewById(R.id.login_register_participant);
         loginButton = view.findViewById(R.id.fragment_loginregister_login);
         registerButton = view.findViewById(R.id.fragment_loginregister_register);
+        resetSettings = view.findViewById(R.id.resetSettings);
 
         registerButton.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.P)
@@ -111,6 +113,15 @@ public class LoginRegisterFragment extends Fragment {
                     params.putString(FirebaseAnalytics.Param.METHOD, "email");
                     firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, params);
                 }
+            }
+        });
+
+        resetSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editor.clear();
+                editor.commit();
+                Toast.makeText(getContext(), "Settings reset", Toast.LENGTH_SHORT).show();
             }
         });
 
