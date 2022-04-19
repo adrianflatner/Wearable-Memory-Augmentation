@@ -17,6 +17,21 @@
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="50dp"
         app:layout_boxedEdges="all">
+<!--     <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <include
+                layout="@layout/card_front"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent" />
+        </FrameLayout>
+-->
+
 
         <TextView
             android:id="@+id/cueText"
@@ -24,7 +39,6 @@
             android:layout_height="wrap_content"
             android:clickable="false"
             android:paddingBottom="20dp"
-            android:text="default text"
             android:textAlignment="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
@@ -43,11 +57,13 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+
         <Button
             android:id="@+id/nextCueButton"
             android:layout_width="76dp"
-            android:layout_height="39dp"
-            android:text="Next"
+            android:layout_height="26dp"
+            android:drawableTop="@drawable/ic_arrow_right"
+            android:background="@android:color/transparent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
@@ -56,12 +72,15 @@
         <Button
             android:id="@+id/prevCueButton"
             android:layout_width="76dp"
-            android:layout_height="39dp"
-            android:text="Prev"
+            android:layout_height="26dp"
+            android:background="@android:color/transparent"
+            android:drawableTop="@drawable/ic_arrow_right"
+            android:rotation="180"
             app:layout_constraintEnd_toEndOf="@+id/nextCueButton"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/cueText" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

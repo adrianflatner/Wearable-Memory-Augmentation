@@ -9,7 +9,9 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -31,24 +33,27 @@ import androidx.work.WorkerParameters;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import no.ntnu.wearablememoryaugmentation.R;
 import no.ntnu.wearablememoryaugmentation.model.Cue;
 import no.ntnu.wearablememoryaugmentation.viewModel.CardViewModel;
 
-public class CardFragment extends Fragment {
+public class CardFragment extends Fragment{
     public static final String CHANNEL_ID = "channelid";
     private NotificationManagerCompat notificationManager;
 
     private CardViewModel cardViewModel;
     private TextView cueText;
-    private ArrayList<Cue> cueArrayList;
+    private ArrayList<Cue> cueArrayList = new ArrayList<>();
 
     private Button flipButton;
     private Button nextCueButton;
@@ -56,21 +61,14 @@ public class CardFragment extends Fragment {
     private int cueNum = 0;
     private boolean isCue;
 
-    private boolean tmpToggle = true;
-
-    public CardFragment(int cueNum){
-        this.cueNum = cueNum;
-        this.isCue = true;
-    }
-
-    public CardFragment(){
-        cueNum = 0;
-    }
+    private FirebaseAnalytics firebaseAnalytics;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v("CARDFRAGMENT", "onCreate()");
+
+        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         cardViewModel = new ViewModelProvider(this).get(CardViewModel.class);
         cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
@@ -85,22 +83,23 @@ public class CardFragment extends Fragment {
                 }
             }
         });
-        //createNotificationChannels();
-        //notificationManager = NotificationManagerCompat.from(this.getContext());
+        createNotificationChannels();
+        notificationManager = NotificationManagerCompat.from(this.getContext());
 
-        /*PeriodicWorkRequest nextCueRequest = new PeriodicWorkRequest.Builder(CueWorker.class, 15, TimeUnit.MINUTES)
+        PeriodicWorkRequest nextCueRequest = new PeriodicWorkRequest.Builder(CueWorker.class, 15, TimeUnit.MINUTES)
                 .build();
 
         WorkManager.getInstance(getContext())
                 .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.KEEP, nextCueRequest);
 
         WorkManager.getInstance(getContext()).getWorkInfoByIdLiveData(nextCueRequest.getId()).observe(this, workInfo -> {
-            Log.e("NEW CUE", String.valueOf(cueCounter));
-            newCue();
-        });*/
+            Log.e("NEW CUE", String.valueOf(cueNum));
+            //newCue();
+        });
+
     }
 
-    /*private void createNotificationChannels() {
+    private void createNotificationChannels() {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
@@ -111,7 +110,7 @@ public class CardFragment extends Fragment {
             manager.createNotificationChannel(channel);
         }
 
-    }*/
+    }
 
     @Nullable
     @Override
@@ -122,30 +121,42 @@ public class CardFragment extends Fragment {
         nextCueButton = view.findViewById(R.id.nextCueButton);
         prevCueButton = view.findViewById(R.id.prevCueButton);
 
+        updateButtonVisibility();
+
+        //prevCueButton.setVisibility(View.GONE);
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        Date date = new Date(System.currentTimeMillis());
+
         flipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(isCue){
                     cueText.setText(cueArrayList.get(cueNum).info);
                     isCue = false;
+                    Bundle bundle = new Bundle();
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipText");
+                    bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                    bundle.putString("received", formatter.format(date));
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
                 } else {
                     cueText.setText(cueArrayList.get(cueNum).cue);
                     isCue = true;
                 }
 
-               /* Intent intent = new Intent(view.getContext(), MainActivity.class);
+                Intent intent = new Intent(view.getContext(), MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 PendingIntent pendingIntent = PendingIntent.getActivity(view.getContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
                 Notification notification = new NotificationCompat.Builder(view.getContext(),
                         CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_baseline_access_time_24)
+                        .setSmallIcon(R.drawable.ic_logo_big)
                         .setContentTitle(cueArrayList.get(cueNum).cue)
                         .setContentText("Tap to see cue")
                         .setContentIntent(pendingIntent)
                         .setAutoCancel(true)
                         .build();
-                notificationManager.notify(1,notification);*/
+                notificationManager.notify(1,notification);
             }
         });
 
@@ -159,6 +170,11 @@ public class CardFragment extends Fragment {
                     cueText.setText(cueArrayList.get(cueNum).cue);
                     isCue = true;
                 }
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipText");
+                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                bundle.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
             }
         });
 
@@ -169,7 +185,14 @@ public class CardFragment extends Fragment {
                     cueNum++;
                     cueText.setText(cueArrayList.get(cueNum).cue);
                     isCue = true;
+
+                    Bundle bundle = new Bundle();
+                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "nextCue");
+                    bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                    bundle.putString("received", formatter.format(date));
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
                 }
+                updateButtonVisibility();
             }
         });
 
@@ -178,12 +201,32 @@ public class CardFragment extends Fragment {
             public void onClick(View view) {
                 if(cueNum > 0){
                     cueNum--;
+                    cueText.setText(cueArrayList.get(cueNum).cue);
+                    isCue = true;
                 }
-                cueText.setText(cueArrayList.get(cueNum).cue);
-                isCue = true;
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "prevCue");
+                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
+                bundle.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                updateButtonVisibility();
             }
         });
         return view;
+    }
+
+    protected void updateButtonVisibility(){
+        if(cueNum == 0){
+            prevCueButton.setVisibility(View.GONE);
+        }
+        else {
+            prevCueButton.setVisibility(View.VISIBLE);
+        }
+        if(cueNum == cueArrayList.size()-1){
+            nextCueButton.setVisibility(View.GONE);
+        } else {
+            nextCueButton.setVisibility(View.VISIBLE);
+        }
     }
 
     /*protected void newCue(){
@@ -192,7 +235,7 @@ public class CardFragment extends Fragment {
         isCue = true;
     }*/
 
-    /*public static class CueWorker extends Worker{
+    public static class CueWorker extends Worker{
         private int cueNum;
         private String nextCueText;
         private String nextCueInfo;
@@ -235,9 +278,13 @@ public class CardFragment extends Fragment {
 
         private NotificationCompat.Builder createNotification() {
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "cueChannel")
-                    .setSmallIcon(R.drawable.ic_baseline_access_time_24)
+                    .setSmallIcon(R.drawable.ic_logo_big)
                     .setContentTitle(nextCueText)
                     .setContentText("Tap to see cue!");
+
+            PendingIntent contentIntent = PendingIntent.getActivity(context, 0, new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+            builder.setContentIntent(contentIntent);
+
             return builder;
         }
 
@@ -252,6 +299,6 @@ public class CardFragment extends Fragment {
 
             return Result.success();
         }
-    }*/
+    }
 
 }

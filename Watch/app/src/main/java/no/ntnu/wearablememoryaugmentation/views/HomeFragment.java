@@ -43,7 +43,7 @@ import no.ntnu.wearablememoryaugmentation.model.Cue;
 import no.ntnu.wearablememoryaugmentation.viewModel.HomeViewModel;
 
 public class HomeFragment extends Fragment {
-    private HomeViewModel homeViewModel;
+    /*private HomeViewModel homeViewModel;
 
     private int cueNum;
     private Fragment cardFragment;
@@ -72,7 +72,7 @@ public class HomeFragment extends Fragment {
 
         WorkManager.getInstance(getContext()).getWorkInfoByIdLiveData(nextCueRequest.getId()).observe(this, workInfo -> {
             Log.e("NEW CUE", String.valueOf(cueNum));
-            newCue();
+            //newCue();
         });
 
     }
@@ -80,12 +80,12 @@ public class HomeFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.home_fragment, container, false);
+        View view = inflater.inflate(R.layout.home_fragment, container, false); */
 
         /*Fragment cardFragment = new CardFragment();
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
         transaction.add(R.id.card_placeholder, cardFragment).commit();
-         */
+         */ /*
         return view;
     }
 
@@ -102,7 +102,7 @@ public class HomeFragment extends Fragment {
         }
 
     }
-
+*/
     /*private NotificationCompat.Builder createNotification(){
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), "cueChannel")
                 .setSmallIcon(R.drawable.ic_baseline_access_time_24)
@@ -111,12 +111,12 @@ public class HomeFragment extends Fragment {
                 return builder;
     }*/
 
-    protected void newCue(){
+    /*protected void newCue(){
         cardFragment = new CardFragment(cueNum);
         transaction = getChildFragmentManager().beginTransaction();
         transaction.replace(R.id.card_placeholder, cardFragment).commit();
-    }
-
+    }*/
+/*
     public static class CueWorker extends Worker {
         private String nextCueText;
         private String nextCueInfo;
@@ -197,5 +197,5 @@ public class HomeFragment extends Fragment {
             return Result.success();
         }
     }
-
+*/
 }
