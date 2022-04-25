@@ -6,7 +6,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,7 +20,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import no.ntnu.wearablememoryaugmentation.R;
 
-public class LoginFragment extends Fragment {
+public class LoginFragment extends Fragment implements AdapterView.OnItemSelectedListener{
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
     private FirebaseAnalytics firebaseAnalytics;
@@ -48,6 +51,31 @@ public class LoginFragment extends Fragment {
                 Navigation.findNavController(getView()).navigate(R.id.action_login_submit);
             }
         });
+
+        Spinner cueSetSpinner = (Spinner) view.findViewById(R.id.cueSelectSpinner);
+        cueSetSpinner.setOnItemSelectedListener(this);
+        ArrayAdapter<CharSequence> cueSetAdapter = ArrayAdapter.createFromResource(inflater.getContext(),
+                R.array.cueSet, android.R.layout.simple_spinner_item);
+        cueSetAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        cueSetSpinner.setAdapter(cueSetAdapter);
+        int cueSetPosition = cueSetAdapter.getPosition(sharedPref.getString("cueSet", "Arts"));
+        cueSetSpinner.setSelection(cueSetPosition);
+
         return view;
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        String value = String.valueOf(adapterView.getItemAtPosition(i));
+        String name = "cueSet";
+        firebaseAnalytics.setUserProperty("CueSet", value);
+
+        editor.putString(name, value);
+        editor.commit();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
     }
 }

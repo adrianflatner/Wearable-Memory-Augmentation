@@ -366,7 +366,7 @@ public class CardFragment extends Fragment {
             firebaseAnalytics = FirebaseAnalytics.getInstance(context);
             cueNum = sharedPref.getInt("cueNum", 0);
             participantId = sharedPref.getString("participantId", "Not set");
-            databaseReference = sharedPref.getString("cueSet", "cues");
+            databaseReference = sharedPref.getString("cueSet", "Arts");
             String cueIndexes = sharedPref.getString("cueIndexes", "0");
             currentIndexes = Stream.of(cueIndexes.split(","))
                     .map(String::trim)

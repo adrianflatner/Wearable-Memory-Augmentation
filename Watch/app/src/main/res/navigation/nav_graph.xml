@@ -7,24 +7,27 @@
     <fragment
         android:id="@+id/loginFragment"
         android:name="no.ntnu.wearablememoryaugmentation.views.LoginFragment"
-        android:label="LoginFragment"/>
+        android:label="LoginFragment">
     <action
         android:id="@+id/action_login_submit"
         app:destination="@id/cardFragment" />
-
+    </fragment>
     <fragment
         android:id="@+id/cardFragment"
         android:name="no.ntnu.wearablememoryaugmentation.views.CardFragment"
-        android:label="CardFragment" />
+        android:label="CardFragment" >
+
     <action
         android:id="@+id/action_click_settings"
         app:destination="@id/settingsFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/settingsFragment"
         android:name="no.ntnu.wearablememoryaugmentation.views.SettingsFragment"
-        android:label="SettingsFragment" />
+        android:label="SettingsFragment" >
     <action
         android:id="@+id/action_reset_settings"
         app:destination="@id/loginFragment" />
+    </fragment>
 </navigation>
