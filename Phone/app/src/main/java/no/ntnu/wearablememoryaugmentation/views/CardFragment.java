@@ -53,7 +53,7 @@ public class CardFragment extends Fragment {
     private TextView finishButton;
     private ArrayList<Cue> cueArrayList;
     private int cueNum;
-    private static final int REPETITION = 4;
+    private static final int REPETITION = 3;
 
     public CardFragment(int cueNum){
         this.cueNum = cueNum;

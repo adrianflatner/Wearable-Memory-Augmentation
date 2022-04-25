@@ -20,8 +20,8 @@
     </string-array>
 
     <string-array name="cueSet">
-        <item>cues</item>
-        <item>set_2</item>
+        <item>Arts</item>
+        <item>Science</item>
         <item>set_3</item>
         <item>set_4</item>
         <item>set_5</item>

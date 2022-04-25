@@ -93,7 +93,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
                 R.array.timings, R.layout.spinner);
         timingAdapter.setDropDownViewResource(R.layout.spinner_item);
         timingSpinner.setAdapter(timingAdapter);
-        int timingPosition = timingAdapter.getPosition(sharedPref.getString("timings", "Random"));
+        int timingPosition = timingAdapter.getPosition(sharedPref.getString("timings", "15 minutes"));
         timingSpinner.setSelection(timingPosition);
 
         Spinner notificationsSpinner = (Spinner) view.findViewById(R.id.notifications_spinner);

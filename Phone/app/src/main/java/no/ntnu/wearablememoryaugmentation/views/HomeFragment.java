@@ -29,7 +29,9 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.ListenableWorker;
 import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -90,7 +92,7 @@ public class HomeFragment extends Fragment {
         editor = sharedPref.edit();
         Log.e("All settings", String.valueOf(sharedPref.getAll()));
         cueNum = sharedPref.getInt("cueNum", 0);
-        repeatInterval = sharedPref.getString("timing", "Random");
+        repeatInterval = sharedPref.getString("timing", "15 minutes");
         isOn = sharedPref.getBoolean("isOn", true);
         device = sharedPref.getString("cuingMode", "Phone");
         Log.e("ISON", isOn.toString());
@@ -133,13 +135,26 @@ public class HomeFragment extends Fragment {
                     .getInstance(getContext())
                     .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.KEEP, nextCueRequest);
 
-
-            WorkManager.getInstance(getContext()).getWorkInfoByIdLiveData(nextCueRequest.getId()).observe(this, workInfo -> {
-                if (workInfo.getState().isFinished()) {
+            // TODO
+           WorkManager.getInstance(getContext()).getWorkInfoByIdLiveData(nextCueRequest.getId()).observe(this, workInfo -> {
+                if (workInfo.getProgress().equals(ListenableWorker.Result.success())) {
                     Log.e("NEW CUE", String.valueOf(cueNum));
                     newCue();
                 }
             });
+
+          /*  SharedPreferences.OnSharedPreferenceChangeListener spChanges = new
+                    SharedPreferences.OnSharedPreferenceChangeListener() {
+                        @Override
+                        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+                                                              String key) {
+                            if(sharedPreferences.getInt("cueNum", 0) != cueNum){
+                                cueNum = sharedPref.getInt("cueNum", 0);
+                                newCue();
+                            }
+                        }
+                    };
+            sharedPref.registerOnSharedPreferenceChangeListener(spChanges);*/
         }
         Bundle bundle = new Bundle();
         bundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "HOME");
@@ -290,14 +305,18 @@ public class HomeFragment extends Fragment {
     public void onStart() {
         super.onStart();
         cueNum = sharedPref.getInt("cueNum", 0);
-        newCue();
+        if(isOn) {
+            newCue();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
         cueNum = sharedPref.getInt("cueNum", 0);
-        newCue();
+        if(isOn) {
+            newCue();
+        }
     }
 
     private void setDeviceIcon() {
@@ -402,7 +421,7 @@ public class HomeFragment extends Fragment {
             editor = sharedPref.edit();
             cueNum = sharedPref.getInt("cueNum", 0) + 1;
             device = sharedPref.getString("cuingMode", "Phone");
-            databaseReference = sharedPref.getString("cueSet", "cues");
+            databaseReference = sharedPref.getString("cueSet", "Arts");
             participantId = sharedPref.getString("participantId", "Not set");
             notifications = sharedPref.getString("notifications", "On");
             String cueIndexes = sharedPref.getString("cueIndexes", "0");
@@ -419,7 +438,7 @@ public class HomeFragment extends Fragment {
                 nextCueText = "Finished with all cues";
                 nextCueInfo = nextCueText;
             } else {
-                int cueNumFB = currentIndexes.get(cueNum)+1;
+                int cueNumFB = currentIndexes.get(cueNum);
                 Log.e("cueNumFB", String.valueOf(cueNumFB));
                 dbRef.child(String.valueOf(cueNumFB)).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
                     @Override
@@ -493,6 +512,12 @@ public class HomeFragment extends Fragment {
                 params.putString("cueInfoLength", String.valueOf(nextCueInfo.length()));
                 params.putString("received", formatter.format(date));
                 firebaseAnalytics.logEvent("receiveNewCue", params);
+            }
+
+            if(nextCueText.equals("Finished with all cues")){
+                WorkManager
+                        .getInstance(context)
+                        .cancelAllWork();
             }
 
             return Result.success();
