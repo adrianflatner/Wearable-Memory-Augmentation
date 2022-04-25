@@ -136,12 +136,13 @@ public class HomeFragment extends Fragment {
                     .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.KEEP, nextCueRequest);
 
             // TODO
+            /*
            WorkManager.getInstance(getContext()).getWorkInfoByIdLiveData(nextCueRequest.getId()).observe(this, workInfo -> {
                 if (workInfo.getProgress().equals(ListenableWorker.Result.success())) {
                     Log.e("NEW CUE", String.valueOf(cueNum));
                     newCue();
                 }
-            });
+            });*/
 
           /*  SharedPreferences.OnSharedPreferenceChangeListener spChanges = new
                     SharedPreferences.OnSharedPreferenceChangeListener() {
