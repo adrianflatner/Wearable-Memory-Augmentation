@@ -97,11 +97,6 @@ public class HomeFragment extends Fragment {
         device = sharedPref.getString("cuingMode", "Phone");
         Log.e("ISON", isOn.toString());
 
-        if (!Connectivity.get(getContext()).isAvailable()) {
-            Toast.makeText(getContext(), "Glasses not available", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         homeViewModel.getUserMutableLiveData().observe(this, new Observer<FirebaseUser>() {
             @Override
@@ -156,6 +151,13 @@ public class HomeFragment extends Fragment {
                         }
                     };
             sharedPref.registerOnSharedPreferenceChangeListener(spChanges);*/
+
+            if (device.equals("Glasses")) {
+                if (!Connectivity.get(getContext()).isAvailable()) {
+                    Toast.makeText(getContext(), "Glasses not available", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
         }
         Bundle bundle = new Bundle();
         bundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "HOME");
@@ -247,6 +249,10 @@ public class HomeFragment extends Fragment {
                                 device = "Watch";
                                 break;
                             case 2:
+                                if (!Connectivity.get(getContext()).isAvailable()) {
+                                    Toast.makeText(getContext(), "Glasses not available", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
                                 on_off_button.setBackgroundResource(R.drawable.ic_glasses);
                                 device = "Glasses";
                                 sendCue();
@@ -274,10 +280,11 @@ public class HomeFragment extends Fragment {
                 if (device.equals("Glasses")) {
                     sendCue();
                 } else {
-                    Bundle bundle = new Bundle();
+                    // TODO
+                    /*Bundle bundle = new Bundle();
                     bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "previous");
                     bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
-                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);*/
                 }
             }
         });
@@ -291,10 +298,11 @@ public class HomeFragment extends Fragment {
                 if (device.equals("Glasses")) {
                     sendCue();
                 } else {
-                    Bundle bundle = new Bundle();
+                    //TODO
+                    /*Bundle bundle = new Bundle();
                     bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "next");
                     bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
-                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);*/
                 }
             }
         });
@@ -381,17 +389,19 @@ public class HomeFragment extends Fragment {
     }
 
     public void sendCue() {
-        Log.e("DEVICES", String.valueOf(Connectivity.get(getContext()).isConnected()));
-        String cue = sharedPref.getString("currentCue", "No cue");
-        String cueInfo = sharedPref.getString("currentInfo", "No cue");
-        String participantId = sharedPref.getString("participantId", "Not set");
-        Intent sendIntent = new Intent(ACTION_SEND);
-        sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
-        sendIntent.putExtra(CUE_TEXT, cue);
-        sendIntent.putExtra(CUE_INFO, cueInfo);
-        sendIntent.putExtra(P_ID, participantId);
-        Connectivity.get(getContext()).sendBroadcast(sendIntent);
-        Log.e("SEND", "SENT");
+        if (Connectivity.get(getContext()).isAvailable()) {
+            Log.e("DEVICES", String.valueOf(Connectivity.get(getContext()).isConnected()));
+            String cue = sharedPref.getString("currentCue", "No cue");
+            String cueInfo = sharedPref.getString("currentInfo", "No cue");
+            String participantId = sharedPref.getString("participantId", "Not set");
+            Intent sendIntent = new Intent(ACTION_SEND);
+            sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
+            sendIntent.putExtra(CUE_TEXT, cue);
+            sendIntent.putExtra(CUE_INFO, cueInfo);
+            sendIntent.putExtra(P_ID, participantId);
+            Connectivity.get(getContext()).sendBroadcast(sendIntent);
+            Log.e("SEND", "SENT");
+        }
     }
 
     public static class CueWorker extends Worker {
@@ -475,13 +485,15 @@ public class HomeFragment extends Fragment {
         }
 
         public void sendCue() {
-            Intent sendIntent = new Intent(ACTION_SEND);
-            sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
-            sendIntent.putExtra(CUE_TEXT, nextCueText);
-            sendIntent.putExtra(CUE_INFO, nextCueInfo);
-            sendIntent.putExtra(P_ID, participantId);
-            Connectivity.get(context).sendBroadcast(sendIntent);
-            Log.e("SEND", "SENT");
+            if (Connectivity.get(context).isAvailable()) {
+                Intent sendIntent = new Intent(ACTION_SEND);
+                sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
+                sendIntent.putExtra(CUE_TEXT, nextCueText);
+                sendIntent.putExtra(CUE_INFO, nextCueInfo);
+                sendIntent.putExtra(P_ID, participantId);
+                Connectivity.get(context).sendBroadcast(sendIntent);
+                Log.e("SEND", "SENT");
+            }
         }
 
         @Override
@@ -509,6 +521,7 @@ public class HomeFragment extends Fragment {
             if (!device.equals("Glasses")) {
                 Bundle params = new Bundle();
                 params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "worker");
+                params.putString("cue", nextCueText);
                 params.putString("cueLength", String.valueOf(nextCueText.length()));
                 params.putString("cueInfoLength", String.valueOf(nextCueInfo.length()));
                 params.putString("received", formatter.format(date));
