@@ -11,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,6 +25,7 @@ import androidx.work.WorkManager;
 
 import com.google.android.gms.common.util.ArrayUtils;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.vuzix.connectivity.sdk.Connectivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -123,6 +125,9 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
                 WorkManager
                         .getInstance(getContext())
                         .cancelAllWork();
+                Bundle params = new Bundle();
+                params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "settings");
+                firebaseAnalytics.logEvent("logOut", params);
             }
         });
 
@@ -154,6 +159,10 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
         String value = String.valueOf(adapterView.getItemAtPosition(i));
         Log.e("VALUE", value);
         if(ArrayUtils.contains(cuingModes, value)){
+            if (!Connectivity.get(getContext()).isAvailable() && value.equals("Glasses")) {
+                Toast.makeText(getContext(), "Glasses not available", Toast.LENGTH_SHORT).show();
+                return;
+            }
             name = "cuingMode";
             firebaseAnalytics.setUserProperty("Device", value);
         }

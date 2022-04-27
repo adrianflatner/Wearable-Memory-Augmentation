@@ -119,8 +119,8 @@ public class CardFragment extends Fragment {
                     }
 
                     try {
-                        editor.putString("currentCue", cues.get(currentIndexes.get(cueNum+1)).cue);
-                        editor.putString("currentInfo", cues.get(currentIndexes.get(cueNum+1)).info);
+                        editor.putString("currentCue", cues.get(currentIndexes.get(cueNum)).cue);
+                        editor.putString("currentInfo", cues.get(currentIndexes.get(cueNum)).info);
                     } catch (Exception e){
                         editor.putString("currentCue", "Finished with all cues");
                         editor.putString("currentInfo", "Finished with all cues");
@@ -155,11 +155,13 @@ public class CardFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), back, front);
-                Bundle bundle = new Bundle();
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipToBack");
-                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
-                bundle.putString("received", formatter.format(date));
-                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                Bundle params = new Bundle();
+                params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "flashcard");
+                params.putString("cue", String.valueOf(cueText.getText()));
+                params.putString("cueLength", String.valueOf(cueText.getText().length()));
+                params.putString("cueInfoLength", String.valueOf(cueInfo.getText().length()));
+                params.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent("flipCardToBack", params);
                 flipButton.setVisibility(View.GONE);
             }
         });
@@ -167,11 +169,13 @@ public class CardFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), front, back);
-                Bundle bundle = new Bundle();
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipToFront");
-                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
-                bundle.putString("received", formatter.format(date));
-                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                Bundle params = new Bundle();
+                params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "flashcard");
+                params.putString("cue", String.valueOf(cueText.getText()));
+                params.putString("cueLength", String.valueOf(cueText.getText().length()));
+                params.putString("cueInfoLength", String.valueOf(cueInfo.getText().length()));
+                params.putString("received", formatter.format(date));
+                firebaseAnalytics.logEvent("flipCardToFront", params);
                 finishButton.setVisibility(View.GONE);
             }
         });
