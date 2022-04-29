@@ -20,13 +20,10 @@
     </string-array>
 
     <string-array name="cueSet">
-        <item>Arts</item>
+        <item>Astronomy</item>
+        <item>Biology</item>
+        <item>Psychology</item>
         <item>Science</item>
-        <item>set_3</item>
-        <item>set_4</item>
-        <item>set_5</item>
-        <item>set_6</item>
-        <item>set_7</item>
     </string-array>
 </resources>
 
