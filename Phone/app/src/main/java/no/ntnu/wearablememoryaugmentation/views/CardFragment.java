@@ -54,6 +54,8 @@ public class CardFragment extends Fragment {
     private ArrayList<Cue> cueArrayList;
     private int cueNum;
     private static final int REPETITION = 3;
+    private String device;
+    SharedPreferences sharedPref;
 
     public CardFragment(int cueNum){
         this.cueNum = cueNum;
@@ -65,10 +67,9 @@ public class CardFragment extends Fragment {
 
         firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
-        SharedPreferences sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        sharedPref = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        //editor.putInt("currentCueListLength", 0);
-        //editor.commit();
+
         cardViewModel = new ViewModelProvider(this).get(CardViewModel.class);
         cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
             @RequiresApi(api = Build.VERSION_CODES.N)
@@ -155,28 +156,34 @@ public class CardFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), back, front);
-                Bundle params = new Bundle();
-                params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "flashcard");
-                params.putString("cue", String.valueOf(cueText.getText()));
-                params.putString("cueLength", String.valueOf(cueText.getText().length()));
-                params.putString("cueInfoLength", String.valueOf(cueInfo.getText().length()));
-                params.putString("received", formatter.format(date));
-                firebaseAnalytics.logEvent("flipCardToBack", params);
                 flipButton.setVisibility(View.GONE);
+                device = sharedPref.getString("cuingMode", "Phone");
+                if(!device.equals("Glasses")){
+                    Bundle params = new Bundle();
+                    params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "flashcard");
+                    params.putString("cue", String.valueOf(cueText.getText()));
+                    params.putString("cueLength", String.valueOf(cueText.getText().length()));
+                    params.putString("cueInfoLength", String.valueOf(cueInfo.getText().length()));
+                    params.putString("received", formatter.format(date));
+                    firebaseAnalytics.logEvent("flipCardToBack", params);
+                }
             }
         });
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 flipCard(inflater.getContext(), front, back);
-                Bundle params = new Bundle();
-                params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "flashcard");
-                params.putString("cue", String.valueOf(cueText.getText()));
-                params.putString("cueLength", String.valueOf(cueText.getText().length()));
-                params.putString("cueInfoLength", String.valueOf(cueInfo.getText().length()));
-                params.putString("received", formatter.format(date));
-                firebaseAnalytics.logEvent("flipCardToFront", params);
                 finishButton.setVisibility(View.GONE);
+                device = sharedPref.getString("cuingMode", "Phone");
+                if(!device.equals("Glasses")) {
+                    Bundle params = new Bundle();
+                    params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "flashcard");
+                    params.putString("cue", String.valueOf(cueText.getText()));
+                    params.putString("cueLength", String.valueOf(cueText.getText().length()));
+                    params.putString("cueInfoLength", String.valueOf(cueInfo.getText().length()));
+                    params.putString("received", formatter.format(date));
+                    firebaseAnalytics.logEvent("flipCardToFront", params);
+                }
             }
         });
 
@@ -186,10 +193,6 @@ public class CardFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-
-        /*for(int i=0; i<cueArrayList.size();i++){
-            Log.e("CUE", String.valueOf(cueArrayList.get(i).cue));
-        }*/
     }
 
     private void flipCard(Context context, View front, View back) {

@@ -38,7 +38,8 @@ public class MainActivity extends ActionMenuActivity {
     private View tutorialView;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
-    private FirebaseAnalytics firebaseAnalytics;
+    private Boolean isOn = false;
+    // private FirebaseAnalytics firebaseAnalytics;
 
     private static final String ACTION_SEND = "no.ntnu.wearablememoryaugmentation.SEND";
     private static final String ACTION_GET = "no.ntnu.wearablememoryaugmentation.GET";
@@ -46,6 +47,7 @@ public class MainActivity extends ActionMenuActivity {
     private static final String CUE_TEXT = "CueText";
     private static final String CUE_INFO = "CueInfo";
     private static final String P_ID = "PId";
+    private static final String STATUS = "status";
 
     private static final int CUE_SIZE = 30;
     private static final int CUE_INFO_SIZE = 24;
@@ -54,12 +56,16 @@ public class MainActivity extends ActionMenuActivity {
     private String currentInfo;
 
     private int state = 0;
+    private int oldState = 0;
 
 
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_main);
-        firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
+
+        // Analytics on glasses
+        // firebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
+
         sharedPref = getContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
 
@@ -73,8 +79,8 @@ public class MainActivity extends ActionMenuActivity {
         }
         mainText = findViewById(R.id.mainText);
         tutorialView = findViewById(R.id.tutorial);
-        currentCue = sharedPref.getString("currentCue", "Connect with phone");
-        currentInfo = sharedPref.getString("currentInfo", "Connect with phone");
+        currentCue = sharedPref.getString("currentCue", "Connect to phone");
+        currentInfo = sharedPref.getString("currentInfo", "Connect to phone");
 
         mainText.setText(currentCue);
     }
@@ -117,10 +123,18 @@ public class MainActivity extends ActionMenuActivity {
             case KeyEvent.KEYCODE_DPAD_RIGHT:
                 state = 1;
                 setMainText();
+                if(oldState != state) {
+                    sendAnalytics("flipCardToBackGlasses", currentCue, String.valueOf(currentCue.length()), String.valueOf(currentInfo.length()));
+                }
+                oldState = state;
                 return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 state = 0;
                 setMainText();
+                if(oldState != state) {
+                    sendAnalytics("flipCardToFrontGlasses", currentCue, String.valueOf(currentCue.length()), String.valueOf(currentInfo.length()));
+                }
+                oldState = state;
                 return true;
             default:
                 return super.onKeyDown(keyCode, event);
@@ -135,6 +149,7 @@ public class MainActivity extends ActionMenuActivity {
         setMainText();
         closeActionMenu(false);
         updateMenuItems();
+        sendAnalytics("flipCardToFrontGlasses", currentCue, String.valueOf(currentCue.length()), String.valueOf(currentInfo.length()));
     }
 
     public void showInfo(MenuItem item) {
@@ -142,7 +157,7 @@ public class MainActivity extends ActionMenuActivity {
         switchView();
         setMainText();
         closeActionMenu(true);
-
+        sendAnalytics("flipCardToBackGlasses", currentCue, String.valueOf(currentCue.length()), String.valueOf(currentInfo.length()));
     }
 
     public void showTutorial(MenuItem item) {
@@ -155,10 +170,12 @@ public class MainActivity extends ActionMenuActivity {
         if (state == 2) {
             mainText.setVisibility(View.GONE);
             tutorialView.setVisibility(View.VISIBLE);
+            sendAnalytics("seeTutorialGlasses", currentCue, String.valueOf(currentCue.length()), String.valueOf(currentInfo.length()));
         } else {
             mainText.setVisibility(View.VISIBLE);
             tutorialView.setVisibility(View.GONE);
         }
+
     }
 
     private void setMainText() {
@@ -209,6 +226,19 @@ public class MainActivity extends ActionMenuActivity {
         }
     }
 
+    public void sendAnalytics(String name, String extraFirst, String extraSecond, String extraThird) {
+        if (isOn) {
+            Intent sendIntent = new Intent(ACTION_SEND);
+            sendIntent.setPackage("no.ntnu.wearablememoryaugmentation");
+            sendIntent.putExtra("name", name);
+            sendIntent.putExtra("extraFirst", extraFirst);
+            sendIntent.putExtra("extraSecond", extraSecond);
+            sendIntent.putExtra("extraThird", extraThird);
+            Connectivity.get(this).sendBroadcast(sendIntent);
+            Log.e("ANALYTICS", "SENT");
+        }
+    }
+
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -226,24 +256,36 @@ public class MainActivity extends ActionMenuActivity {
                     editor.commit();
                     currentInfo = cueInfo;
                 }
+
+                state = 0;
+                switchView();
                 setMainText();
+
 
                 String participantId = intent.getStringExtra(P_ID);
                 if (participantId != null) {
                     editor.putString("participantId", participantId);
                     editor.commit();
-                    firebaseAnalytics.setUserId(participantId);
+
+                    // Analytics on glasses
+                    // firebaseAnalytics.setUserId(participantId);
+                }
+
+                Boolean status = intent.getBooleanExtra(STATUS, false);
+                if (status != null){
+                    isOn = status;
                 }
 
                 SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
                 Date date = new Date(System.currentTimeMillis());
 
-                Bundle params = new Bundle();
+                // Analytics on glasses
+                /*Bundle params = new Bundle();
                 params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "worker");
                 params.putString("cueLength", String.valueOf(cueText.length()));
                 params.putString("cueInfoLength", String.valueOf(cueInfo.length()));
                 params.putString("received", formatter.format(date));
-                firebaseAnalytics.logEvent("receiveNewCue", params);
+                firebaseAnalytics.logEvent("receiveNewCueGlasses", params);*/
 
                 PowerManager pm = (PowerManager) context.getApplicationContext().getSystemService(Context.POWER_SERVICE);
                 @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock mWakeLock = pm.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "wakeLock");

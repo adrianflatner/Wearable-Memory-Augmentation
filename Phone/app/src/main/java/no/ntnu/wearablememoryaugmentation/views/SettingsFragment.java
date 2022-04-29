@@ -42,6 +42,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
     private SharedPreferences.Editor editor;
     private FirebaseAnalytics firebaseAnalytics;
     private Boolean isOn;
+    private String device;
 
     String[] cuingModes;
     String[] timings;
@@ -60,6 +61,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
         timings = getResources().getStringArray(R.array.timings);
         notifications = getResources().getStringArray(R.array.notifications);
         isOn = sharedPref.getBoolean("isOn", true);
+        device = sharedPref.getString("cuingMode", "Phone");
 
         settingsViewModel.getLoggedOutMutableLiveData().observe(this, new Observer<Boolean>() {
             @Override
@@ -69,10 +71,6 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
                 }
             }
         });
-
-        Bundle bundle = new Bundle();
-        bundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "SETTINGS");
-        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle);
     }
 
     @Nullable
@@ -165,6 +163,9 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
             }
             name = "cuingMode";
             firebaseAnalytics.setUserProperty("Device", value);
+            Bundle bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "ChangeDevice");
+            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle);
         }
         else if (ArrayUtils.contains(timings, value) && !value.equals(sharedPref.getString("timings", "null"))){
             name = "timings";
@@ -186,6 +187,9 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
         else{
             name = "cueSet";
             firebaseAnalytics.setUserProperty("CueSet", value);
+            Bundle bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "ChangeCueSet");
+            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle);
         }
 
         editor.putString(name, value);
