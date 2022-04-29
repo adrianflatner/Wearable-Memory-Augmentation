@@ -83,7 +83,16 @@ public class LoginRegisterFragment extends Fragment {
                 String email = emailEditText.getText().toString();
                 String password = passwordEditText.getText().toString();
                 String participantId = participantIdEditText.getText().toString().trim();
-                if(email.length() > 0 && password.length() > 0){
+                if(participantId.length() <= 0){
+                    participantIdEditText.setError("Required");
+                }
+                if(email.length() <= 0){
+                    emailEditText.setError("Required");
+                }
+                if(password.length() <= 0){
+                    passwordEditText.setError("Required");
+                }
+                if(email.length() > 0 && password.length() > 0 && participantId.length() > 0){
                     loginRegisterViewModel.register(email, password);
                     firebaseAnalytics.setUserId(participantId);
                     editor.putString("participantId", participantId);
@@ -103,8 +112,16 @@ public class LoginRegisterFragment extends Fragment {
                 String email = emailEditText.getText().toString().trim();
                 String password = passwordEditText.getText().toString().trim();
                 String participantId = participantIdEditText.getText().toString().trim();
-
-                if(email.length() > 0 && password.length() > 0){
+                if(participantId.length() <= 0){
+                    participantIdEditText.setError("Required");
+                }
+                if(email.length() <= 0){
+                    emailEditText.setError("Required");
+                }
+                if(password.length() <= 0){
+                    passwordEditText.setError("Required");
+                }
+                if(email.length() > 0 && password.length() > 0 && participantId.length() > 0){
                     loginRegisterViewModel.login(email, password);
                     firebaseAnalytics.setUserId(participantId);
                     editor.putString("participantId", participantId);
