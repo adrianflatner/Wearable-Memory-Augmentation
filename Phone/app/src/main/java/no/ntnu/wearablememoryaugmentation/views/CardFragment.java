@@ -128,6 +128,9 @@ public class CardFragment extends Fragment {
                     }
                     editor.commit();
                 }
+                if(cueInfo.getText().length() > 70){
+                    cueInfo.setTextSize(19);
+                }
             }
         });
     }

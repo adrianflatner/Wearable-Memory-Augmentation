@@ -1,5 +1,6 @@
 package no.ntnu.wearablememoryaugmentation.views;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -12,6 +13,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -480,7 +482,7 @@ public class HomeFragment extends Fragment {
             editor = sharedPref.edit();
             cueNum = sharedPref.getInt("cueNum", 0) + 1;
             device = sharedPref.getString("cuingMode", "Phone");
-            databaseReference = sharedPref.getString("cueSet", "Arts");
+            databaseReference = sharedPref.getString("cueSet", "Astronomy");
             participantId = sharedPref.getString("participantId", "Not set");
             notifications = sharedPref.getString("notifications", "On");
             String cueIndexes = sharedPref.getString("cueIndexes", "0");
@@ -581,6 +583,11 @@ public class HomeFragment extends Fragment {
                         .getInstance(context)
                         .cancelAllWork();
             }
+
+            PowerManager pm = (PowerManager) context.getApplicationContext().getSystemService(Context.POWER_SERVICE);
+            @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock mWakeLock = pm.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "wakeLock");
+            mWakeLock.acquire();
+            mWakeLock.release();
 
             return Result.success();
         }
