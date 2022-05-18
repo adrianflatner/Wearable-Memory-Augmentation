@@ -56,10 +56,10 @@ public class AppRepository {
         cueListMutableLiveData = new MutableLiveData<ArrayList<Cue>>();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.P)
+
     public void login (String email, String password) {
         firebaseAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(application.getMainExecutor(), new OnCompleteListener<AuthResult>() {
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()){
@@ -71,11 +71,10 @@ public class AppRepository {
                     }
                 });
     }
-
-    @RequiresApi(api = Build.VERSION_CODES.P)
+    // application.getMainExecutor(),
     public void register(String email, String password){
         firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(application.getMainExecutor(), new OnCompleteListener<AuthResult>() {
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()){

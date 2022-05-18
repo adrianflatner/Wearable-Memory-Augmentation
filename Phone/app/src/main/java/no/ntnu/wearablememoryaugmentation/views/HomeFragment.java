@@ -195,14 +195,14 @@ public class HomeFragment extends Fragment {
 
         if (isOn) {
             newCue();
-            previousButton.setVisibility(View.VISIBLE);
-            nextButton.setVisibility(View.VISIBLE);
+            //previousButton.setVisibility(View.VISIBLE);
+            //nextButton.setVisibility(View.VISIBLE);
             Log.e("DEVICE", device);
             setDeviceIcon();
         } else {
             cardOff.setVisibility(View.VISIBLE);
-            previousButton.setVisibility(View.GONE);
-            nextButton.setVisibility(View.GONE);
+            //previousButton.setVisibility(View.GONE);
+            //nextButton.setVisibility(View.GONE);
             on_off_button.setBackgroundResource(R.drawable.ic_on_button_red);
         }
 
@@ -224,8 +224,8 @@ public class HomeFragment extends Fragment {
                     newCue();
                     cardOff.setVisibility(View.GONE);
                     setDeviceIcon();
-                    previousButton.setVisibility(View.VISIBLE);
-                    nextButton.setVisibility(View.VISIBLE);
+                    //previousButton.setVisibility(View.VISIBLE);
+                    //nextButton.setVisibility(View.VISIBLE);
                 } else {
                     transaction = getChildFragmentManager().beginTransaction();
                     transaction.remove(cardFragment).commit();
@@ -234,8 +234,8 @@ public class HomeFragment extends Fragment {
                             .getInstance(getContext())
                             .cancelAllWork();
                     on_off_button.setBackgroundResource(R.drawable.ic_on_button_red);
-                    previousButton.setVisibility(View.GONE);
-                    nextButton.setVisibility(View.GONE);
+                    //previousButton.setVisibility(View.GONE);
+                    //nextButton.setVisibility(View.GONE);
                 }
             }
         });

@@ -173,7 +173,7 @@ public class SettingsFragment extends Fragment implements AdapterView.OnItemSele
                 PeriodicWorkRequest nextCueRequest =
                         new PeriodicWorkRequest.Builder(HomeFragment.CueWorker.class, HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
                                 // Constraints
-                                //.setInitialDelay(HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
+                                .setInitialDelay(HomeFragment.getRepeatInterval(value), TimeUnit.MINUTES)
                                 .build();
                 WorkManager.getInstance(getContext())
                         .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.REPLACE, nextCueRequest);
