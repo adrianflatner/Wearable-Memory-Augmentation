@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Amplified</string>
+    <!--
+    This string is used for square devices and overridden by hello_world in
+    values-round/strings.xml for round devices.
+    -->
+    <string name="q0">Sarajevo 1914</string>
+    <string name="a0">Assasination of archduke Franz Ferdinand, leading to the outbreak of WW1</string>
+    <string name="q1">Eidsvoll 1814</string>
+    <string name="a1">Den norske grunnlov ble skrevet 17.mai 1814 på Eidsvoll</string>
+</resources>
