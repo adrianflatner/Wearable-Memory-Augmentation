@@ -9,56 +9,55 @@
     android:padding="3dp"
     android:scrollbars="vertical"
     tools:context=".views.CardFragment"
-    tools:deviceIds="wear">
+    tools:deviceIds="wear"
+    android:background="@color/app_background">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:minHeight="150dp"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="50dp"
         app:layout_boxedEdges="all">
-<!--     <FrameLayout
+
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <include
-                layout="@layout/card_front"
-                android:layout_height="match_parent"
-                android:layout_width="match_parent" />
-        </FrameLayout>
--->
+            app:layout_constraintTop_toBottomOf="@+id/flipButton">
 
 
-        <TextView
-            android:id="@+id/cueText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:paddingBottom="20dp"
-            android:textAlignment="center"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/flipButton" />
+            <TextView
+                android:id="@+id/cueText"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:clickable="false"
+                android:paddingBottom="20dp"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/flipButton" />
+        </ScrollView>
 
-        <Button
+        <ImageView
             android:id="@+id/flipButton"
-            android:layout_width="113dp"
-            android:layout_height="22dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_marginStart="14dp"
             android:layout_marginEnd="14dp"
-            android:background="@android:color/transparent"
-            android:drawableTop="@drawable/ic_round_flip_camera_androidswap"
+            android:background="@drawable/ic_round_flip_camera_androidswap"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
 
-        <Button
+     <!--   <Button
             android:id="@+id/nextCueButton"
             android:layout_width="76dp"
             android:layout_height="26dp"
@@ -80,16 +79,29 @@
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/cueText" />
-
-        <Button
+-->
+        <ImageView
             android:id="@+id/settingsButton"
-            android:layout_width="15dp"
-            android:layout_height="15dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/ic_settings"
-            app:layout_constraintBottom_toTopOf="@+id/cueText"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.75"
             app:layout_constraintStart_toEndOf="@+id/flipButton"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textViewId"
+            android:layout_width="37dp"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:textColor="@color/app_green"
+            android:textSize="15sp"
+            app:layout_constraintEnd_toStartOf="@+id/flipButton"
+            app:layout_constraintHorizontal_bias="0.25"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="333" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

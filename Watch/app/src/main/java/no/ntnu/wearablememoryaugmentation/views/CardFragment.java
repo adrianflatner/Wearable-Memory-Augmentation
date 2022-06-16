@@ -1,5 +1,6 @@
 package no.ntnu.wearablememoryaugmentation.views;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -10,14 +11,13 @@ import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -60,16 +60,14 @@ public class CardFragment extends Fragment {
 
     private CardViewModel cardViewModel;
     private TextView cueText;
-    private ArrayList<Cue> cueArrayList = new ArrayList<>();
 
     //For å kunne flippe
-    private String currentCueInfo;
-    private String currentCueText;
+    private String currentCueInfo = "";
+    private String currentCueText = "";
 
-    private Button flipButton;
-    private Button nextCueButton;
-    private Button prevCueButton;
-    private Button settingsButton;
+    private ImageView flipButton;
+    private ImageView settingsButton;
+    private TextView textViewId;
     private int cueNum;
     private boolean isCue;
 
@@ -77,7 +75,7 @@ public class CardFragment extends Fragment {
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
 
-    private static final int REPETITION = 4;
+    private static final int REPETITION = 3;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -93,22 +91,78 @@ public class CardFragment extends Fragment {
 
         cardViewModel = new ViewModelProvider(this).get(CardViewModel.class);
 
-        newCue();
-
+        //newCue();
 
         notificationManager = NotificationManagerCompat.from(this.getContext());
 
+        cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
+            @Override
+            public void onChanged(ArrayList<Cue> cues) {
+                Log.e("CUE-cardViewModel_onChanged()", "onChanged()");
+                if (cues != null) {
+                    List<Integer> currentIndexes = new ArrayList<>();
+                    int currentCueListLength = sharedPref.getInt("currentCueListLength", 0);
+                    if (currentCueListLength != cues.size()) {
+                        List<Integer> index = new ArrayList<>();
+                        for (int i = 0; i < cues.size(); i++) {
+                            index.add(i);
+                        }
+                        for (int i = 1; i <= REPETITION; i++) {
+                            currentIndexes.addAll(index);
+                        }
+                        Collections.shuffle(currentIndexes);
+                        editor.putString("cueIndexes", String.valueOf(currentIndexes)
+                                .replace("[", "")
+                                .replace("]", ""));
+                        editor.putInt("currentCueListLength", cues.size());
+                        editor.commit();
+                        Log.e("cueIndexes-randomized", String.valueOf(currentIndexes));
+                    } else {
+                        String cueIndexes = sharedPref.getString("cueIndexes", "0");
+                        Log.e("CUEINDEXES", cueIndexes);
+                        currentIndexes = Stream.of(cueIndexes.split(","))
+                                .map(String::trim)
+                                .map(Integer::parseInt)
+                                .collect(Collectors.toList());
+                    }
+
+                    cueNum = cueNum < 0 ? -1 : cueNum;
+                    cueNum = currentIndexes.size() <= cueNum ? currentIndexes.size() : cueNum;
+                    editor.putInt("cueNum", cueNum);
+                    if (cueNum >= currentIndexes.size() || cueNum < 0) {
+                        cueText.setText("Finished with all cues");
+                        //TODO her er det mulig noe må legges til
+                    } else {
+                        Log.e("CUENUM", String.valueOf(cueNum));
+                        Log.e("CURRENTINDEX", String.valueOf(currentIndexes.get(cueNum)));
+                        //Flip
+                        currentCueText = cues.get(currentIndexes.get(cueNum)).cue;
+                        currentCueInfo = cues.get(currentIndexes.get(cueNum)).info;
+                        cueText.setText(cues.get(currentIndexes.get(cueNum)).cue);
+                        cueText.setTypeface(null, Typeface.BOLD);
+                        isCue = true;
+                    }
+                    try {
+                        editor.putString("currentCue", cues.get(currentIndexes.get(cueNum)).cue);
+                        Log.v("CURRENTCUE", cues.get(currentIndexes.get(cueNum)).cue);
+                    } catch (Exception e) {
+                        editor.putString("currentCue", "Finished with all cues");
+                    }
+                    editor.commit();
+                }
+            }
+        });
+
         PeriodicWorkRequest nextCueRequest = new PeriodicWorkRequest.Builder(CueWorker.class, 15, TimeUnit.MINUTES)
+                .setInitialDelay(15, TimeUnit.MINUTES)
                 .build();
 
         WorkManager.getInstance(getContext())
                 .enqueueUniquePeriodicWork("cueWork", ExistingPeriodicWorkPolicy.KEEP, nextCueRequest);
 
         WorkManager.getInstance(getContext()).getWorkInfoByIdLiveData(nextCueRequest.getId()).observe(this, workInfo -> {
-            Log.e("NEW CUE", String.valueOf(cueNum));
-            //newCue();
+            Log.e("WORKMANAGERNEWCUE", String.valueOf(cueNum));
         });
-        //TODO add firebaseevent
     }
 
     private void createNotificationChannels() {
@@ -130,11 +184,11 @@ public class CardFragment extends Fragment {
 
         cueText = view.findViewById(R.id.cueText);
         flipButton = view.findViewById(R.id.flipButton);
-        nextCueButton = view.findViewById(R.id.nextCueButton);
-        prevCueButton = view.findViewById(R.id.prevCueButton);
         settingsButton = view.findViewById(R.id.settingsButton);
+        textViewId = view.findViewById(R.id.textViewId);
 
-        updateButtonVisibility();
+        textViewId.setText(sharedPref.getString("participantId", "null"));
+        cueText.setText(sharedPref.getString("currentCue", "No cues yet"));
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
         Date date = new Date(System.currentTimeMillis());
@@ -143,36 +197,46 @@ public class CardFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 if (isCue) {
-                    //cueText.setText(cueArrayList.get(cueNum).info);
                     cueText.setText(currentCueInfo);
                     cueText.setTypeface(null, Typeface.NORMAL);
+                    cueText.setTextSize(20);
                     isCue = false;
-                    Bundle bundle = new Bundle();
-                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipText");
-                    bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
-                    bundle.putString("received", formatter.format(date));
-                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+                    Bundle params = new Bundle();
+                    params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "watch");
+                    params.putString("cue", String.valueOf(cueText.getText()));
+                    params.putString("cueLength", String.valueOf(cueText.getText().length()));
+                    params.putString("cueInfoLength", String.valueOf(currentCueInfo.length()));
+                    params.putString("received", formatter.format(date));
+                    firebaseAnalytics.logEvent("flipCardToBack", params);
                 } else {
                     //cueText.setText(cueArrayList.get(cueNum).cue);
                     cueText.setText(currentCueText);
                     cueText.setTypeface(null, Typeface.BOLD);
+                    cueText.setTextSize(30);
                     isCue = true;
+                    Bundle params = new Bundle();
+                    params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "watch");
+                    params.putString("cue", String.valueOf(cueText.getText()));
+                    params.putString("cueLength", String.valueOf(cueText.getText().length()));
+                    params.putString("cueInfoLength", String.valueOf(currentCueInfo.length()));
+                    params.putString("received", formatter.format(date));
+                    firebaseAnalytics.logEvent("flipCardToFront", params);
                 }
 
-                //TODO Dette er for testing av notifikasjoner og kan fjernes
-                /*Intent intent = new Intent(view.getContext(), MainActivity.class);
+                /*//TODO Dette er for testing av notifikasjoner og kan fjernes
+                Intent intent = new Intent(view.getContext(), MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 PendingIntent pendingIntent = PendingIntent.getActivity(view.getContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
-                Notification notification = new NotificationCompat.Builder(view.getContext(),
-                        CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_logo_big)
-                        .setContentTitle(cueArrayList.get(cueNum).cue)
-                        .setContentText("Tap to see cue")
-                        .setContentIntent(pendingIntent)
-                        .setAutoCancel(true)
-                        .build();
-                notificationManager.notify(1,notification);*/
+                    Notification notification = new NotificationCompat.Builder(view.getContext(),
+                            CHANNEL_ID)
+                            .setSmallIcon(R.drawable.ic_logo_big)
+                            .setContentTitle("Testing notifications")
+                            .setContentText("Tap to see cue")
+                            .setContentIntent(pendingIntent)
+                            .setAutoCancel(true)
+                            .build();
+                    notificationManager.notify(1,notification);*/
             }
         });
 
@@ -183,12 +247,27 @@ public class CardFragment extends Fragment {
                     //cueText.setText(cueArrayList.get(cueNum).info);
                     cueText.setText(currentCueInfo);
                     cueText.setTypeface(null, Typeface.NORMAL);
+                    cueText.setTextSize(20);
                     isCue = false;
+                    Bundle params = new Bundle();
+                    params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "watch");
+                    params.putString("cue", String.valueOf(cueText.getText()));
+                    params.putString("cueLength", String.valueOf(cueText.getText().length()));
+                    params.putString("cueInfoLength", String.valueOf(currentCueInfo.length()));
+                    params.putString("received", formatter.format(date));
+                    firebaseAnalytics.logEvent("flipCardToBack", params);
                 } else {
-                    //cueText.setText(cueArrayList.get(cueNum).cue);
                     cueText.setText(currentCueText);
                     cueText.setTypeface(null, Typeface.BOLD);
+                    cueText.setTextSize(30);
                     isCue = true;
+                    Bundle params = new Bundle();
+                    params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "watch");
+                    params.putString("cue", String.valueOf(cueText.getText()));
+                    params.putString("cueLength", String.valueOf(cueText.getText().length()));
+                    params.putString("cueInfoLength", String.valueOf(currentCueInfo.length()));
+                    params.putString("received", formatter.format(date));
+                    firebaseAnalytics.logEvent("flipCardToFront", params);
                 }
                 Bundle bundle = new Bundle();
                 bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "flipText");
@@ -198,176 +277,62 @@ public class CardFragment extends Fragment {
             }
         });
 
-        nextCueButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                /*if (cueNum < cueArrayList.size() - 1) {
-                    cueNum++;
-                    cueText.setText(cueArrayList.get(cueNum).cue);
-                    isCue = true;
-
-                    Bundle bundle = new Bundle();
-                    bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "nextCue");
-                    bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
-                    bundle.putString("received", formatter.format(date));
-                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
-                }
-                updateButtonVisibility();
-            }*/
-                cueNum = sharedPref.getInt("cueNum", 0);
-                cueNum += 1;
-                editor.putInt("cueNum", cueNum);
-                editor.commit();
-                newCue();
-                //cueText.setText(sharedPref.getString("currentCue", "test"));
-                //TODO add firebaseevent
-            }
-        });
-
-        prevCueButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (cueNum > 0) {
-                    cueNum--;
-                    editor.putInt("cueNum", cueNum);
-                    editor.commit();
-                    newCue();
-                    //cueText.setText(cueArrayList.get(cueNum).cue);
-                    //isCue = true;
-                }
-                Bundle bundle = new Bundle();
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "prevCue");
-                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "button");
-                bundle.putString("received", formatter.format(date));
-                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
-                updateButtonVisibility();
-            }
-        });
-
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Navigation.findNavController(getView()).navigate(R.id.action_click_settings);
             }
         });
-
         return view;
     }
 
-    private void newCue(){
-        cardViewModel.getCueListMutableLiveData().observe(this, new Observer<ArrayList<Cue>>() {
-            @Override
-            public void onChanged(ArrayList<Cue> cues) {
-                /*if (cues != null) {
-                    cueNum = cueNum < 0 ? 0 : cueNum;
-                    cueNum = cues.size() <= cueNum ? cues.size() - 1 : cueNum;
-                    cueText.setText(cues.get(cueNum).cue);
-                    cueArrayList = cues;
-                }*/
-
-                if (cues != null) {
-                    List<Integer> currentIndexes = new ArrayList<>();
-                    int currentCueListLength = sharedPref.getInt("currentCueListLength", 0);
-                    Log.d("CUELISTLENGTH", String.valueOf(cues.size()));
-                    Log.d("CUELISTGET", String.valueOf(currentCueListLength));
-                    Log.d("CUENUM",String.valueOf(cueNum));
-                    if(currentCueListLength != cues.size()){
-                        List<Integer> index = new ArrayList<>();
-                        for(int i = 0; i < cues.size(); i++){
-                            index.add(i);
-                        }
-                        for(int i = 1; i <= REPETITION; i++){
-                            currentIndexes.addAll(index);
-                        }
-                        Collections.shuffle(currentIndexes);
-                        editor.putString("cueIndexes", String.valueOf(currentIndexes)
-                                .replace("[","")
-                                .replace("]",""));
-                        editor.putInt("currentCueListLength", cues.size());
-                        editor.commit();
-                    } else {
-                        String cueIndexes = sharedPref.getString("cueIndexes", "0");
-                        currentIndexes = Stream.of(cueIndexes.split(","))
-                                .map(String::trim)
-                                .map(Integer::parseInt)
-                                .collect(Collectors.toList());
-                    }
-                    for(int i:currentIndexes){
-                        Log.e("INDEX", String.valueOf(i));
-                    }
-                    cueNum = cueNum < 0 ? -1 : cueNum;
-                    cueNum = currentIndexes.size() <= cueNum ? currentIndexes.size() : cueNum;
-                    editor.putInt("cueNum", cueNum);
-                    if(cueNum >= currentIndexes.size() || cueNum < 0){
-                        cueText.setText("Finished with all cues");
-                        //TODO her er det mulig noe må legges til
-                    } else {
-                        Log.e("CUENUM", String.valueOf(cueNum));
-                        Log.e("CURRENTINDEX", String.valueOf(currentIndexes.get(cueNum)));
-                        //Flip
-                        currentCueText = cues.get(currentIndexes.get(cueNum)).cue;
-                        currentCueInfo = cues.get(currentIndexes.get(cueNum)).info;
-                        cueText.setText(cues.get(currentIndexes.get(cueNum)).cue);
-                        cueText.setTypeface(null, Typeface.BOLD);
-                        isCue = true;
-                        //TODO add cueInfo
-                    }
-                    try {
-                        editor.putString("currentCue", cues.get(currentIndexes.get(cueNum+1)).cue);
-                        Log.v("CURRENTCUE",cues.get(currentIndexes.get(cueNum+1)).cue);
-                        //TODO samme med info
-                    } catch (Exception e) {
-                        editor.putString("currentCue", "Finished with all cues");
-                        //TODO samme med info
-                    }
-                    editor.commit();
-                }
-            }
-        });
+    @Override
+    public void onStart() {
+        super.onStart();
+        cueNum = sharedPref.getInt("cueNum", 0);
+        Bundle params = new Bundle();
+        params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "appStatus");
+        firebaseAnalytics.logEvent("appInForeground", params);
     }
 
-    protected void updateButtonVisibility() {
-        if (cueNum == 0) {
-            prevCueButton.setVisibility(View.GONE);
-        } else {
-            prevCueButton.setVisibility(View.VISIBLE);
-        }
-        if (cueNum == cueArrayList.size() - 1) {
-            nextCueButton.setVisibility(View.GONE);
-        } else {
-            nextCueButton.setVisibility(View.VISIBLE);
-        }
+    @Override
+    public void onResume() {
+        super.onResume();
+        cueNum = sharedPref.getInt("cueNum", 0);
     }
 
-    /*protected void newCue(){
-        cueNum++;
-        cueText.setText(cueArrayList.get(cueNum).cue);
-        isCue = true;
-    }*/
+    @Override
+    public void onStop() {
+        super.onStop();
+        Bundle params = new Bundle();
+        params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "appStatus");
+        firebaseAnalytics.logEvent("appInBackground", params);
+    }
 
     public static class CueWorker extends Worker {
+        private Context context;
+        private int notificationId = 0;
+        private SharedPreferences sharedPref;
+        private SharedPreferences.Editor editor;
         private int cueNum;
         private String nextCueText;
         private String nextCueInfo;
-        private int notificationId = 0;
-        private Context context;
-        private SharedPreferences sharedPref;
-        private SharedPreferences.Editor editor;
+        private FirebaseAnalytics firebaseAnalytics;
         private String participantId;
         private String databaseReference;
         private List<Integer> currentIndexes = new ArrayList<>();
-        private FirebaseAnalytics firebaseAnalytics;
 
         public CueWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
             super(context, workerParams);
             this.context = context;
+            firebaseAnalytics = FirebaseAnalytics.getInstance(context);
             sharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
             editor = sharedPref.edit();
-            firebaseAnalytics = FirebaseAnalytics.getInstance(context);
-            cueNum = sharedPref.getInt("cueNum", 0);
+            cueNum = sharedPref.getInt("cueNum", 0) + 1;
             participantId = sharedPref.getString("participantId", "Not set");
-            databaseReference = sharedPref.getString("cueSet", "Arts");
+            databaseReference = sharedPref.getString("cueSet", "Astronomy");
             String cueIndexes = sharedPref.getString("cueIndexes", "0");
+            Log.e("WORKER-cueIndexes", cueIndexes);
             currentIndexes = Stream.of(cueIndexes.split(","))
                     .map(String::trim)
                     .map(Integer::parseInt)
@@ -381,20 +346,24 @@ public class CardFragment extends Fragment {
             if (cueNum >= currentIndexes.size()) {
                 nextCueText = "Finished with all cues";
                 nextCueInfo = nextCueText;
+                //TODO Check if this works
+                WorkManager.getInstance(context).cancelAllWork();
+                Log.e("WORKER-CANCELLALLWORK()", "cancelAllWork()");
             } else {
-                int cueNumFB = currentIndexes.get(cueNum) + 1;
-                Log.v("CueNumFB", String.valueOf(cueNumFB));
+                int cueNumFB = currentIndexes.get(cueNum);
                 dbRef.child(String.valueOf(cueNumFB)).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<DataSnapshot> task) {
                         if (!task.isSuccessful()) {
-                            Log.e("firebase", "Error geting data", task.getException());
+                            Log.e("firebase", "Error getting data", task.getException());
                         } else {
                             Log.v("FIREBASERESULTS", String.valueOf(task.getResult().getValue()));
                             Cue nextCue = task.getResult().getValue(Cue.class);
-                            nextCueText = nextCue.cue;
-                            nextCueInfo = nextCue.info;
-                            Log.v("CUE", nextCue.cue);
+                            if (nextCue != null) {
+                                nextCueText = nextCue.cue;
+                                nextCueInfo = nextCue.info;
+                                Log.v("CUE", nextCue.cue);
+                            }
                         }
                     }
                 });
@@ -402,10 +371,11 @@ public class CardFragment extends Fragment {
         }
 
         private NotificationCompat.Builder createNotification() {
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "cueChannel")
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_logo_big)
                     .setContentTitle(nextCueText)
-                    .setContentText("Tap to see cue!");
+                    .setContentText("Tap to see cue!")
+                    .setAutoCancel(true);
 
             PendingIntent contentIntent = PendingIntent.getActivity(context, 0, new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
             builder.setContentIntent(contentIntent);
@@ -416,26 +386,42 @@ public class CardFragment extends Fragment {
         @NonNull
         @Override
         public Result doWork() {
+            Log.v("WORKER-DOWORK()", "doWork()");
+            Log.v("WORKER-CUENUM-BEFORE-fetchCues()", String.valueOf(cueNum));
             fetchCues();
+            Log.v("WORKER-CUENUM-AFTER-fetchCues()", String.valueOf(cueNum));
 
             editor.putInt("cueNum", cueNum);
             editor.putString("currentCue", nextCueText);
             editor.putString("currentInfo", nextCueInfo);
             editor.commit();
 
-            notificationId++;
+
+            notificationId += 1;
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             notificationManager.notify(notificationId, createNotification().build());
+
 
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
             Date date = new Date(System.currentTimeMillis());
 
-            /*Bundle params = new Bundle();
-            params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "worker");
-            params.putString("cueLength", String.valueOf(nextCueText.length()));
-            params.putString("cueInfoLength", String.valueOf(nextCueInfo.length()));
-            params.putString("received", formatter.format(date));
-            firebaseAnalytics.logEvent("receivedNewCue", params);*/
+            Bundle params = new Bundle();
+            params.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "watch");
+            params.putString("cue", nextCueText);
+            
+//            params.putString("cueLength", String.valueOf(nextCueText.length()));
+            //params.putString("cueInfoLength", String.valueOf(nextCueInfo.length()));
+//            params.putString("received", formatter.format(date));
+            firebaseAnalytics.logEvent("receiveNewCue", params);
+
+            if (nextCueText.equals("Finished with all cues")) {
+                WorkManager.getInstance(context).cancelAllWork();
+            }
+
+            PowerManager pm = (PowerManager) context.getApplicationContext().getSystemService(Context.POWER_SERVICE);
+            @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock mWakeLock = pm.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "wakeLock");
+            mWakeLock.acquire();
+            mWakeLock.release();
 
             return Result.success();
         }

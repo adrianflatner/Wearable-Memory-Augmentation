@@ -6,4 +6,5 @@
     android:layout_height="50dp"
     android:ellipsize="marquee"
     android:padding="8dp"
-    android:singleLine="true" />
+    android:singleLine="true"
+    android:layout_gravity="center"/>

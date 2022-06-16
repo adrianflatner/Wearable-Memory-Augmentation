@@ -3,19 +3,19 @@ package no.ntnu.wearablememoryaugmentation.views;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.Spinner;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.work.WorkManager;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -26,6 +26,7 @@ public class SettingsFragment extends Fragment {
     private SharedPreferences.Editor editor;
     private FirebaseAnalytics firebaseAnalytics;
     private Button resetButton;
+    private ImageView settingsBackButton;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,41 +42,30 @@ public class SettingsFragment extends Fragment {
         View view = inflater.inflate(R.layout.settings_fragment, container, false);
 
         resetButton = view.findViewById(R.id.resetSettingsButton);
-
-        //TODO Ser ut som at siden det er settings_fragment som inflateres, så finner man ikke spinneren
-        //TODO siden den er i login_fragment
-        /*Spinner cueSetSpinner = (Spinner) view.findViewById(R.id.cueSelectSpinner);
-        cueSetSpinner.setOnItemSelectedListener(this);
-        ArrayAdapter<CharSequence> cueSetAdapter = ArrayAdapter.createFromResource(inflater.getContext(),
-                R.array.cueSet, android.R.layout.simple_spinner_item);
-        cueSetAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        cueSetSpinner.setAdapter(cueSetAdapter);
-        int cueSetPosition = cueSetAdapter.getPosition(sharedPref.getString("cueSet", "Arts"));
-        cueSetSpinner.setSelection(cueSetPosition);*/
+        settingsBackButton = view.findViewById(R.id.settingsBackButton);
 
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO legg til logikk for resetting av settings
+                WorkManager.getInstance(getContext()).cancelAllWork();
+                editor.clear().commit();
+                Toast.makeText(getContext(), "Settings reset", Toast.LENGTH_SHORT).show();
+                /*Toast toast = Toast.makeText(getContext(), "Settings reset", Toast.LENGTH_SHORT);
+                TextView textView = (TextView) toast.getView().findViewById(android.R.id.message);
+                textView.setTextColor(getResources().getColor(R.color.white));
+                textView.setBackgroundResource(R.color.app_green);
+                toast.show();*/
                 Navigation.findNavController(getView()).navigate(R.id.action_reset_settings);
+            }
+        });
+
+        settingsBackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Navigation.findNavController(getView()).navigate(R.id.action_backButton_settings);
             }
         });
 
         return view;
     }
-
-    /*@Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        String value = String.valueOf(adapterView.getItemAtPosition(i));
-        String name = "cueSet";
-        firebaseAnalytics.setUserProperty("CueSet", value);
-
-        editor.putString(name, value);
-        editor.commit();
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
-    }*/
 }

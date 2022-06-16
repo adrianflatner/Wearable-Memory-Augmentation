@@ -39,7 +39,7 @@ public class AppRepository {
         this.application = application;
 
         sharedPref = application.getSharedPreferences("settings", Context.MODE_PRIVATE);
-        String databaseReference = sharedPref.getString("cueSet", "Arts");
+        String databaseReference = sharedPref.getString("cueSet", "Astronomy");
 
         firebaseAuth = FirebaseAuth.getInstance();
         userMutableLiveData = new MutableLiveData<>();
